@@ -1,8 +1,6 @@
 # MarEvo
 A Super Mario Bros. machine learning approach using neuroevolution. Implemented by Aren Wells, Matt Huraza, and Trenton Thompson.
 
-#Pudding
-
 ## TODO:
 - Restructure some code and re-analyze portions (primarily network and cmaes)
   - Improve learning speed -> gotta beat 36 gens!
