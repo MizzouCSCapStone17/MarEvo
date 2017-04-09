@@ -1,4 +1,5 @@
 require "inputs"
+--require "io"
 
 _buttons = {
   "A",
@@ -38,9 +39,12 @@ _maxNodes = 1000000
 
 _score = 0
 
-_stateNum = 1
-_state = savestate.create(_stateNum)
-savestate.save(_state)
+--_stateNum = 1
+--_state = savestate.create(_stateNum)
+--savestate.save(_state)
+--savestate.load(_state)
+_state = "1-1.State"
+--savestate.save(_filename)
 savestate.load(_state)
 
 function sigmoid(x)
@@ -405,7 +409,7 @@ function newGroup()
 end
 
 function initializeRun()
-    --savestate.load(Filename);
+    savestate.load(_state)
     rightmost = 0
     pool.currentFrame = 0
     timeout = _timeoutConstant
@@ -422,7 +426,8 @@ function clearJoypad()
     for b = 1,#_buttons do
         controller[_buttons[b]] = false
     end
-    joypad.set(1,controller)
+    --joypad.set(1, controller)
+  joypad.set(controller)
 end
 
 function generateNeuralNet(marioAgent)
@@ -481,7 +486,8 @@ function evaluateCurrent()
         controller["Down"] = false
     end
 
-    joypad.set(1, controller)
+    --joypad.set(1, controller)
+    joypad.set(controller)
     --for b, v in pairs(controller) do 
     --  print(b,v)
     --joypad.set(1, {right = 1})
@@ -576,7 +582,10 @@ function newGeneration()
     
     pool.generation = pool.generation + 1
     
-    --writeFile("backup." .. pool.generation .. "." .. forms.gettext(saveLoadFile))
+    writeFile("gen" .. pool.generation .. ".pool")
+    --local file = io.open("gen" .. pool.generation .. ".pool", "w")
+    --file:write("poop\n")
+    --file:close()
 end
 
 function breedChild(group)
@@ -740,7 +749,7 @@ end
 
 if pool == nil then
     initializePool()
-    emu.message(#pool.group)
+    --emu.message(#pool.group)
 end
 
 function displayMarioAgent(marioAgent)
@@ -776,7 +785,7 @@ function displayMarioAgent(marioAgent)
         else
             color = 0xFF000000
         end
-        gui.drawtext(223, 24+8*o, _buttons[o], color, 9)
+        gui.drawText(223, 24+8*o, _buttons[o], color, 9)
         --gui.text(0, 0+8*o, _buttons[o])
     end
     
@@ -827,7 +836,7 @@ function displayMarioAgent(marioAgent)
         end
     end
     
-    gui.drawbox(50-_boxRadius*5-3,70-_boxRadius*5-3,50+_boxRadius*5+2,70+_boxRadius*5+2,0xFF000000, 0x80808080)
+    gui.drawBox(50-_boxRadius*5-3,70-_boxRadius*5-3,50+_boxRadius*5+2,70+_boxRadius*5+2,0xFF000000, 0x80808080)
     for n,cell in pairs(cells) do
         if n > _inputs or cell.value ~= 0 then
             local color = math.floor((cell.value+1)/2*256)
@@ -838,7 +847,7 @@ function displayMarioAgent(marioAgent)
                 opacity = 0x50000000
             end
             color = opacity + color*0x10000 + color*0x100 + color
-            gui.drawbox(cell.x-2,cell.y-2,cell.x+2,cell.y+2,opacity,color)
+            gui.drawBox(cell.x-2,cell.y-2,cell.x+2,cell.y+2,opacity,color)
         end
     end
     for _,trait in pairs(marioAgent.traits) do
@@ -856,11 +865,11 @@ function displayMarioAgent(marioAgent)
             else
                 color = opacity + 0x800000 + 0x100*color
             end
-            gui.drawline(c1.x+1, c1.y, c2.x-3, c2.y, color)
+            gui.drawLine(c1.x+1, c1.y, c2.x-3, c2.y, color)
         end
     end
     
-    gui.drawbox(49,71,51,78,0x00000000,0x80FF0000)
+    gui.drawBox(49,71,51,78,0x00000000,0x80FF0000)
     
     --[[if forms.ischecked(showMutationRates) then
         local pos = 100
@@ -871,7 +880,106 @@ function displayMarioAgent(marioAgent)
     end]]
 end
 
-emu.speedmode('maximum')
+function loadFile(filename)
+        local file = io.open(filename, "r")
+	pool = newPool()
+	pool.generation = file:read("*number")
+	pool.maxFitness = file:read("*number")
+	forms.settext(maxFitnessLabel, "Max Fitness: " .. math.floor(pool.maxFitness))
+        local numGroups = file:read("*number")
+        for s=1,numGroups do
+		local group = newGroup()
+		table.insert(pool.group, group)
+		group.topFitness = file:read("*number")
+		group.staleness = file:read("*number")
+		local numMarioAgents = file:read("*number")
+		for g=1,numMarioAgents do
+			local marioAgent = newMarioAgent()
+			table.insert(group.marioAgents, marioAgent)
+			marioAgent.fitness = file:read("*number")
+			marioAgent.maxNeuron = file:read("*number")
+			local line = file:read("*line")
+			while line ~= "done" do
+				marioAgent.mutationRates[line] = file:read("*number")
+				line = file:read("*line")
+			end
+			local numTraits = file:read("*number")
+			for n=1,numTraits do
+				local trait = newTrait()
+				table.insert(marioAgent.traits, trait)
+				local enabled
+				trait.into, trait.out, trait.weight, trait.innovation, enabled = file:read("*number", "*number", "*number", "*number", "*number")
+				if enabled == 0 then
+					trait.enabled = false
+				else
+					trait.enabled = true
+				end
+				
+			end
+		end
+	end
+        file:close()
+	
+	while fitnessAlreadyMeasured() do
+		nextMarioAgent()
+	end
+	initializeRun()
+	pool.currentFrame = pool.currentFrame + 1
+end
+
+function writeFile(filename)
+  local file = io.open(filename, "w")
+	file:write(pool.generation .. "\n")
+	file:write(pool.maxFitness .. "\n")
+	file:write(#pool.group .. "\n")
+  for n,group in pairs(pool.group) do
+		file:write(group.topFitness .. "\n")
+		file:write(group.staleness .. "\n")
+		file:write(#group.marioAgents .. "\n")
+		for m, marioAgent in pairs(group.marioAgents) do
+			file:write(marioAgent.fitness .. "\n")
+			file:write(marioAgent.maxNeuron .. "\n")
+			for mutation,rate in pairs(marioAgent.mutationRates) do
+				file:write(mutation .. "\n")
+				file:write(rate .. "\n")
+			end
+			file:write("done\n")
+			
+			file:write(#marioAgent.traits .. "\n")
+			for l,trait in pairs(marioAgent.traits) do
+				file:write(trait.into .. " ")
+				file:write(trait.out .. " ")
+				file:write(trait.weight .. " ")
+				file:write(trait.innovation .. " ")
+				if(trait.enabled) then
+					file:write("1\n")
+				else
+					file:write("0\n")
+				end
+			end
+		end
+  end
+  file:close()
+end
+
+function loadPool()
+	local filename = forms.gettext(saveLoadFile)
+	loadFile(filename)
+end
+
+function savePool()
+	local filename = forms.gettext(saveLoadFile)
+	writeFile(filename)
+end
+
+writeFile("temp.pool")
+--emu.speedmode('maximum')
+
+form = forms.newform(200, 260, "Fitness")
+saveButton = forms.button(form, "Save", savePool, 5, 102)
+loadButton = forms.button(form, "Load", loadPool, 80, 102)
+saveLoadFile = forms.textbox(form, _state .. ".pool", 170, 25, nil, 5, 148)
+saveLoadLabel = forms.label(form, "Save/Load:", 5, 129)
 
 while true do
     --clouds = memory.readbyte(0x743)
@@ -892,7 +1000,8 @@ while true do
         evaluateCurrent()
     end
     
-    joypad.set(1, controller)
+    --joypad.set(1, controller)
+    joypad.set(controller)
     
     getPositions()
     if marioX > rightmost then
@@ -927,7 +1036,7 @@ while true do
         while fitnessAlreadyMeasured() do
             nextMarioAgent()
         end
-        savestate.load(_state)
+        --savestate.load(_state)
         initializeRun()
     end
 
@@ -942,8 +1051,8 @@ while true do
         end
     end
     
-    gui.text(0, 212, "Gen: " .. pool.generation .. " || Group: " .. pool.currentGroup .. " || Agent: " .. pool.currentMarioAgent .. " || Measured: " .. math.floor(measured/total*100) .. " %")
-        gui.text(0, 220, "Fitness: " .. math.floor(rightmost - (pool.currentFrame) / 2 - (timeout + timeoutBonus)*2/3) + (marioScore / 10) .. " || Max Fitness: " .. math.floor(pool.maxFitness))
+    gui.text(0, 410, "Gen: " .. pool.generation .. " || Group: " .. pool.currentGroup .. " || Agent: " .. pool.currentMarioAgent .. " || Measured: " .. math.floor(measured/total*100) .. " %")
+        gui.text(0, 420, "Fitness: " .. math.floor(rightmost - (pool.currentFrame) / 2 - (timeout + timeoutBonus)*2/3) + (marioScore / 10) .. " || Max Fitness: " .. math.floor(pool.maxFitness))
     
     pool.currentFrame = pool.currentFrame + 1
   
