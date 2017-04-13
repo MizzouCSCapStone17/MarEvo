@@ -582,7 +582,8 @@ function newGeneration()
     
     pool.generation = pool.generation + 1
     
-    writeFile("gen" .. pool.generation .. ".pool")
+    --writeFile("gen" .. pool.generation .. ".pool")
+    writeFile("mybackup." .. pool.generation .. "." .. forms.gettext(saveLoadFile))
     --local file = io.open("gen" .. pool.generation .. ".pool", "w")
     --file:write("poop\n")
     --file:close()
@@ -885,7 +886,7 @@ function loadFile(filename)
 	pool = newPool()
 	pool.generation = file:read("*number")
 	pool.maxFitness = file:read("*number")
-	forms.settext(maxFitnessLabel, "Max Fitness: " .. math.floor(pool.maxFitness))
+	--forms.settext(maxFitnessLabel, "Max Fitness: " .. math.floor(pool.maxFitness))
         local numGroups = file:read("*number")
         for s=1,numGroups do
 		local group = newGroup()
@@ -1028,6 +1029,7 @@ while true do
         
         if fitness > pool.maxFitness then
             pool.maxFitness = fitness
+            writeFile("mybackup." .. pool.generation .. "." .. forms.gettext(saveLoadFile))
         end
         
         --emu.message("Gen " .. pool.generation .. " group " .. pool.currentgroup .. " marioAgent " .. pool.currentmarioAgent .. " fitness: " .. fitness)
