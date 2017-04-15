@@ -5,11 +5,6 @@ function getPositions()
     
     screenX = memory.readbyte(0x03AD)
 		screenY = memory.readbyte(0x03B8)
-  
-    marioScore = memory.readbyte(0x7D8)*100000+memory.readbyte(0x07D9)*10000+   memory.readbyte(0x07DA)*1000
-		marioScore = marioScore+memory.readbyte(0x07DB)*100 + memory.readbyte(0x07DC)*10 + memory.readbyte(0x07DC)*1
-		--marioLevel = memory.readbyte(0x075C)
-		--marioWorld = memory.readbyte(0x075F)
 end
 
 --gets tile used for input
@@ -51,17 +46,10 @@ function getSprites()
     return sprites
 end
 
-function getMarioScore()
-    -- 0x07DD-0x07E2	Mario score (1000000 100000 10000 1000 100 10)
-    local addresses = { 0x7DD, 0x7DE, 0x7DF, 0x7E0, 0x7E1, 0x7E2 }
-    local scores = { 1000000, 100000, 10000, 1000, 100, 10 }
-    local score = 0
-    -- FIXME!
-    for i = 1, table.getn(addresses) do
-        score = score + (scores[i] * memory.readbyte(addresses[i]))
-    end
-
-    return score
+function getLevelInfo()
+    marioScore = memory.readbyte(0x7D8)*100000 + memory.readbyte(0x07D9)*10000 + memory.readbyte(0x07DA)*1000 + memory.readbyte(0x07DB)*100 + memory.readbyte(0x07DC)*10 + memory.readbyte(0x07DC)*1
+		marioLevel = memory.readbyte(0x075C)
+		marioWorld = memory.readbyte(0x075F)
 end
 
 function getInputs()
@@ -99,4 +87,13 @@ function getInputs()
     --mariovy = memory.read_s8(0x7D)
     
     return inputs
+end
+
+function playing()
+    local levelResetTimer = memory.readbyte(0x0747)
+    local loadingScreen = memory.readbyte(0x071E)
+    local playerState = memory.readbyte(0x000E)
+    local playOnScreen = memory.readbyte(0x00B5)
+    
+    return levelResetTimer==0 and loadingScreen~=11 and (playerState==8 or playerState==1 or playerState==0) and playOnScreen<=1
 end
