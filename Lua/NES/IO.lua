@@ -8,7 +8,7 @@ function writeFile(filename)
   for n,group in pairs(pool.group) do
 		file:write(group.topFitness .. "\n")
 		file:write(group.staleness .. "\n")
-		file:write(group.marioAgents .. "\n")
+		file:write(#group.marioAgents .. "\n")
 		for m,marioAgent in pairs(group.marioAgents) do
 			file:write(marioAgent.fitness .. "\n")
 			file:write(marioAgent.maxNeuron .. "\n")
@@ -71,8 +71,8 @@ function loadFile(filename)
     for s=1,numGroups do
       local group = newGroup()
       table.insert(pool.group, group)
-      species.topFitness = file:read("*number")
-      species.staleness = file:read("*number")
+      group.topFitness = file:read("*number")
+      group.staleness = file:read("*number")
       local numMarioAgents = file:read("*number")
       for g=1,numMarioAgents do
         local marioAgent = newMarioAgent()
@@ -81,7 +81,7 @@ function loadFile(filename)
         marioAgent.maxNeuron = file:read("*number")
         local line = file:read("*line")
         while line ~= "done" do
-          genome.mutationRates[line] = file:read("*number")
+          marioAgent.mutationRates[line] = file:read("*number")
           line = file:read("*line")
         end
         local numTraits = file:read("*number")

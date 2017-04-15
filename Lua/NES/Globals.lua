@@ -26,7 +26,7 @@ _inputs = _inputSize + 1
 _outputs = #_buttons
 
 --number of agents per generation
-_population = 300
+_population = 200
 
 --deltas for group selection
 _deltaDisjoint = 2.0

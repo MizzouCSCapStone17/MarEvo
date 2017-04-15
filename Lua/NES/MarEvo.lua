@@ -11,7 +11,6 @@ createForm(140,40,400,200)
 
 --event.onexit(onExit())
 
-
 --Begin the infinte fitness loop
 while true do
   --collision = memory.readbyte(0x490)
@@ -66,7 +65,7 @@ while true do
         
       if fitness > pool.maxFitness then
         pool.maxFitness = fitness
-        --writeFile("mybackup." .. pool.generation .. "." .. forms.gettext(saveLoadFile))
+        writeFile("Pools/gen" .. pool.generation .. "." .. marioWorld .. "-".. marioLevel .. ".pool")
       end
         
       console.write("Gen " .. pool.generation .. ". Group " .. pool.currentGroup .. ". Agent " .. pool.currentMarioAgent .. ". Fitness: " .. fitness .. "\n")

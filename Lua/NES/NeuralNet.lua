@@ -351,9 +351,10 @@ function newGeneration()
         addToGroup(child)
     end
     
-    pool.generation = pool.generation + 1
+    writeFile("Pools/gen" .. pool.generation .. "." .. marioWorld .. "-".. marioLevel .. ".pool")
     
-    --writeFile("mybackup." .. pool.generation .. "." .. forms.gettext(saveLoadFile))
+    pool.generation = pool.generation + 1
+
 end
 
 function breedChild(group)

@@ -31,5 +31,5 @@ function createForm(x, y, boxX, boxY)
     yval=incY(y) xval=0
     --File Save
     saveLoadLabel = forms.label(form, "Save/Load:", xval, yval)
-    saveLoadFile = forms.textbox(form, "New.pool", 110, 25, nil, incX(x), yval)
+    saveLoadFile = forms.textbox(form, ".pool", 110, 25, nil, incX(x), yval)
 end
