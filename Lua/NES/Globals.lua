@@ -50,6 +50,15 @@ _enableMutationChance = 0.2
 --how long until timeout
 _timeoutConstant = 30
 
+--if group has died
+_autoTimeout = false
+--what happens if group has died
+_noFitness = false
+
+--num agents can be in one location and still get good fitness
+_noveltyConstant=1
+_currentNSFitness=0
+
 --total num of connecting nodes possible for each trait. So output nodes can start at a certain number
 _maxNodes = 1000000
 

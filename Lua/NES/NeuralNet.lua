@@ -8,14 +8,33 @@ end
 
 --a new collection of all groups for all generations
 function newPool()
-    local pool = {}
-    pool.group = {}
-    pool.generation = 0
-    pool.innovation = _outputs 
-    pool.currentGroup = 1
-    pool.currentMarioAgent = 1
-    pool.currentFrame = 0
-    pool.maxFitness = 0
+  local pool = {}
+  pool.group = {}
+  pool.generation = 0
+  pool.innovation = _outputs 
+  pool.currentGroup = 1
+  pool.currentMarioAgent = 1
+  pool.currentFrame = 0
+  pool.maxFitness = 0
+    
+  pool.landscape = {}
+  pool.oldLandscape = {}
+  --stats
+  pool.maxFitnessAgent = {} --Vanillia Best Fitness of this Generation per Genome
+	pool.maxDistanceAgent = {} --Highest Rightmost Fitnes of this Generation per Genome
+	pool.maxNoveltyAgent = {} --Highest Novelty Fitness of this Generation per Genome
+	pool.maxFitnessCollective = {} --Vanillia Best Fitness of this Generation per Genome
+	pool.maxDistanceCollective = {} --Highest Rightmost Fitnes of this Generation per Genome
+	pool.maxNoveltyCollective = {} --Highest Novelty Fitness of this Generation per Genome
+	pool.avgFitnessGenome = {} --Vanillia Best Fitness of this Generation per Genome
+	pool.avgDistanceGenome = {} --Highest Rightmost Fitnes of this Generation per Genome
+	pool.avgNoveltyGenome = {} --Highest Novelty Fitness of this Generation per Genome
+	pool.avgFitnessCollective = {} --Vanillia Best Fitness of this Generation per Genome
+	pool.avgDistanceCollective = {} --Highest Rightmost Fitnes of this Generation per Genome
+	pool.avgNoveltyCollective = {} --Highest Novelty Fitness of this Generation per Genome
+	NetWorld = marioWorld
+	NetLevel = marioLevel
+	half = false
     
     return pool
 end
@@ -31,10 +50,11 @@ function newMarioAgent()
     local marioAgent = {}
     marioAgent.traits = {} --like genes
     marioAgent.fitness = 0 --how good the agent is
-    marioAgent.adjustedFitness = 0
+    marioAgent.distanceFitness = 0
     marioAgent.nn = {} --truth table of all input/output vals
     marioAgent.maxNeuron = 0 --num inputs
     marioAgent.globalRank = 0 --rank compared to other agents
+    marioAgent.ran = false
     marioAgent.mutationRates = {}
     marioAgent.mutationRates["connections"] = _mutateConnectionsChance
     marioAgent.mutationRates["link"] = _linkMutationChance
@@ -50,8 +70,8 @@ end
 --copys an agent to another agent
 function copyMarioAgent(marioAgent)
     local marioAgent2 = newMarioAgent()
-    for g=1,#marioAgent.traits do
-        table.insert(marioAgent2.traits, copyTrait(marioAgent.traits[g]))
+    for t = 1, #marioAgent.traits do
+        table.insert(marioAgent2.traits, copyTrait(marioAgent.traits[t]))
     end
     marioAgent2.maxNeuron = marioAgent.maxNeuron
     marioAgent2.mutationRates["connections"] = marioAgent.mutationRates["connections"]
@@ -542,37 +562,60 @@ function displayMarioAgent(marioAgent)
     local cells = {}
     local i = 1
     local cell = {}
+    --finds all visible cells
     for dy=-_boxRadius,_boxRadius do
         for dx=-_boxRadius,_boxRadius do
             cell = {}
-            cell.x = 50+5*dx
-            cell.y = 70+5*dy
+            cell.x = 120+16*dx
+            cell.y = 184+16*dy
             cell.value = nn.neurons[i].value
             cells[i] = cell
             i = i + 1
         end
     end
+    --dinds the bias cell
     local biasCell = {}
-    biasCell.x = 80
-    biasCell.y = 110
+    biasCell.x = 5
+    biasCell.y = 150
     biasCell.value = nn.neurons[_inputs].value
     cells[_inputs] = biasCell
     
+    gui.drawIcon('controller.ico', 0, 0, 160, 128)
+    --draws all outputs onto controller
     for o = 1,_outputs do
         cell = {}
-        cell.x = 220
-        cell.y = 30 + 8 * o
+        if o == 1 then
+          cell.x = 90
+          cell.y = 80
+        elseif o == 2 then
+          cell.x = 112
+          cell.y = 80
+        elseif o == 3 then
+          cell.x = 16
+          cell.y = 64
+        elseif o == 4 then
+          cell.x = 16
+          cell.y = 80
+        elseif o == 5 then
+          cell.x = 8
+          cell.y = 72
+        else
+          cell.x = 34
+          cell.y = 72
+        end
+        --cell.x = 10 + 16 * o
+        --cell.y = 60
         cell.value = nn.neurons[_maxNodes + o].value
         cells[_maxNodes+o] = cell
         local color
         if cell.value > 0 then
-            color = 0xFF0000FF
+            color = 0xFF00FF00
         else
-            color = 0xFF000000
+            color = 0xFFFFFFFF
         end
-        gui.drawText(223, 24+8*o, _buttons[o], color, 9)
     end
     
+    --finds cells of all neurons
     for n,neuron in pairs(nn.neurons) do
         cell = {}
         if n > _inputs and n <= _maxNodes then
@@ -583,6 +626,7 @@ function displayMarioAgent(marioAgent)
         end
     end
     
+    --finds lines between input,output,and hidden nodes
     for n=1,4 do
         for _,trait in pairs(marioAgent.traits) do
             if trait.enabled then
@@ -620,7 +664,7 @@ function displayMarioAgent(marioAgent)
         end
     end
     
-    gui.drawBox(50-_boxRadius*5-3,70-_boxRadius*5-3,50+_boxRadius*5+2,70+_boxRadius*5+2,0xFF000000, 0x80808080)
+    --draws all cells
     for n,cell in pairs(cells) do
         if n > _inputs or cell.value ~= 0 then
             local color = math.floor((cell.value+1)/2*256)
@@ -631,9 +675,10 @@ function displayMarioAgent(marioAgent)
                 opacity = 0x50000000
             end
             color = opacity + color*0x10000 + color*0x100 + color
-            gui.drawBox(cell.x-2,cell.y-2,cell.x+2,cell.y+2,opacity,color)
+            gui.drawBox(cell.x-8,cell.y-8,cell.x+8,cell.y+8,opacity,color)
         end
     end
+    --draws all lines
     for _,trait in pairs(marioAgent.traits) do
         if trait.enabled then
             local c1 = cells[trait.into]
@@ -653,11 +698,11 @@ function displayMarioAgent(marioAgent)
         end
     end
     
-    gui.drawBox(49,71,51,78,0x00000000,0x80FF0000)
+    --gui.drawBox(49,71,51,78,0x00000000,0x80FF0000)
     
-        local pos = 100
+        local pos = 50
         for mutation,rate in pairs(marioAgent.mutationRates) do
-            gui.drawText(100, pos, mutation .. ": " .. rate, 0xFF000000, 10)
+            gui.drawText(80, pos, mutation .. ": " .. rate, 0xFF000000, 10)
             pos = pos + 8
         end
 end

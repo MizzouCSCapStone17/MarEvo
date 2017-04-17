@@ -16,7 +16,7 @@ while true do
   --collision = memory.readbyte(0x490)
   --gui.text(0,140,collision)
     
-  --gui.drawBox(0, 0, 300, 40, 0xD0FFFFFF, 0xD0FFFFFF)
+  gui.drawBox(0, 0, 300, 50, 0xFFFFFFFF, 0xFFFFFFFF)
   
   --Get current group and agent
   local group = pool.group[pool.currentGroup]
@@ -52,7 +52,7 @@ while true do
     --give a timeout/living bonus based on every 4 frames
     local timeoutBonus = pool.currentFrame / 4
     
-    --if agent did not finish within the timeout end the run
+    --if agent did not finish within the timeout, end the run
     if timeout + timeoutBonus <= 0 or math.floor(rightmost - (pool.currentFrame) / 2 - (timeout + timeoutBonus)*2/3) + (marioScore / 10) < -200 then
       local fitness = (rightmost - pool.currentFrame / 2) + (marioScore / 15)
       if rightmost > 3186 then
@@ -91,9 +91,9 @@ while true do
         end
       end
     end
-    
-    gui.text(0, 410, "Gen: " .. pool.generation .. " || Group: " .. pool.currentGroup .. " || Agent: " .. pool.currentMarioAgent .. " || Measured: " .. math.floor(measured/total*100) .. " %")
-    gui.text(0, 420, "Fitness: " .. math.floor(rightmost - (pool.currentFrame) / 2 - (timeout + timeoutBonus)*2/3) + (marioScore / 10) .. " || Max Fitness: " .. math.floor(pool.maxFitness))
+    gui.drawText(110, 5, "MarEvo", 0xFF000000, 11)
+    gui.drawText(0, 20, "Gen: " .. pool.generation .. " || Group: " .. pool.currentGroup .. " || Agent: " .. pool.currentMarioAgent .. " || " .. math.floor(measured/total*100) .. " %", 0xFF000000, 11)
+    gui.drawText(0, 30, "Fitness: " .. math.floor(rightmost - (pool.currentFrame) / 2 - (timeout + timeoutBonus)*2/3) + (marioScore / 10) .. " || Max Fitness: " .. math.floor(pool.maxFitness), 0xFF000000, 11)
     
     --update frame our way
     pool.currentFrame = pool.currentFrame + 1

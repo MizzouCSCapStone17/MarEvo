@@ -38,3 +38,17 @@ function totalAverageFitness()
 
     return total
 end
+
+function gainNoveltyFitness(location)
+	if pool.generation > 0 then
+		local count = 0
+		if pool.oldLandscape[location] ~= nil then
+			for k,v in pairs(pool.Oldlandscape[location]) do
+		       	count=count+1
+			end
+		end
+		if count  <= _noveltyConstant then
+			_currentNSFitness = _currentNSFitness+1
+		end
+	end
+end

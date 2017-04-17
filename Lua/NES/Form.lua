@@ -18,8 +18,8 @@ function createForm(x, y, boxX, boxY)
     
     form = forms.newform(boxX, boxY, "MarEvo Settings")
     
-    showNeuralNet = forms.checkbox(form, "Show NN", xval, yval)
-    showMutationRates = forms.checkbox(form, "Show Mutate Rates", incX(x), yval)
+    showNeuralNet = forms.checkbox(form, "Machine Vision", xval, yval)
+    --showMutationRates = forms.checkbox(form, "Show Mutate Rates", incX(x), yval)
     yval = incY(y) 
     xval = 0
     
