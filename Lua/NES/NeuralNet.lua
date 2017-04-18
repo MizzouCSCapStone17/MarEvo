@@ -276,7 +276,7 @@ function evaluateNeuralNet(nn, inputs)
     for _,neuron in pairs(nn.neurons) do
         local sum = 0
         for j = 1,#neuron.incoming do
-            --go all genes that connect an output
+            --go all traits that connect an output
             local incoming = neuron.incoming[j]
             --find input that this connects to
             local other = nn.neurons[incoming.into]
@@ -321,13 +321,6 @@ function evaluateCurrent()
     end
 
     joypad.set(controller, 1)
-end
-
-function fitnessAlreadyMeasured()
-    local group = pool.group[pool.currentGroup]
-    local marioAgent = group.marioAgents[pool.currentMarioAgent]
-    
-    return marioAgent.fitness ~= 0
 end
 
 function nextMarioAgent()
@@ -380,12 +373,12 @@ end
 function breedChild(group)
     local child = {}
     if math.random() < _crossoverChance then
-        g1 = group.marioAgents[math.random(1, #group.marioAgents)]
-        g2 = group.marioAgents[math.random(1, #group.marioAgents)]
-        child = crossover(g1, g2)
+        a1 = group.marioAgents[math.random(1, #group.marioAgents)]
+        a2 = group.marioAgents[math.random(1, #group.marioAgents)]
+        child = crossover(a1, a2)
     else
-        g = group.marioAgents[math.random(1, #group.marioAgents)]
-        child = copyMarioAgent(g)
+        a = group.marioAgents[math.random(1, #group.marioAgents)]
+        child = copyMarioAgent(a)
     end
     
     mutate(child)
@@ -553,10 +546,6 @@ function clearJoypad()
   joypad.set(controller, 1)
 end
 
-if pool == nil then
-    initializePool()
-end
-
 function displayMarioAgent(marioAgent)
     local nn = marioAgent.nn
     local cells = {}
@@ -586,22 +575,22 @@ function displayMarioAgent(marioAgent)
         cell = {}
         if o == 1 then
           cell.x = 90
-          cell.y = 80
+          cell.y = 72
         elseif o == 2 then
-          cell.x = 112
-          cell.y = 80
+          cell.x = 106
+          cell.y = 72
         elseif o == 3 then
-          cell.x = 16
-          cell.y = 64
+          cell.x = 20
+          cell.y = 60
         elseif o == 4 then
-          cell.x = 16
+          cell.x = 20
           cell.y = 80
         elseif o == 5 then
           cell.x = 8
-          cell.y = 72
+          cell.y = 68
         else
           cell.x = 34
-          cell.y = 72
+          cell.y = 68
         end
         --cell.x = 10 + 16 * o
         --cell.y = 60
@@ -678,6 +667,7 @@ function displayMarioAgent(marioAgent)
             gui.drawBox(cell.x-8,cell.y-8,cell.x+8,cell.y+8,opacity,color)
         end
     end
+    
     --draws all lines
     for _,trait in pairs(marioAgent.traits) do
         if trait.enabled then
@@ -697,12 +687,11 @@ function displayMarioAgent(marioAgent)
             gui.drawLine(c1.x+1, c1.y, c2.x-3, c2.y, color)
         end
     end
-    
-    --gui.drawBox(49,71,51,78,0x00000000,0x80FF0000)
-    
+    --[[
         local pos = 50
         for mutation,rate in pairs(marioAgent.mutationRates) do
             gui.drawText(80, pos, mutation .. ": " .. rate, 0xFF000000, 10)
             pos = pos + 8
         end
+      ]]
 end

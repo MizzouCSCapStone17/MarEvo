@@ -16,6 +16,14 @@ function rankGlobally()
     end
 end
 
+--determines if current agent has fitness measured
+function fitnessAlreadyMeasured()
+    local group = pool.group[pool.currentGroup]
+    local marioAgent = group.marioAgents[pool.currentMarioAgent]
+    
+    return marioAgent.fitness ~= 0
+end
+
 --calculates avg fitness of a group by global rank added up divided by num of agents
 function calculateAverageFitness(group)
     local total = 0

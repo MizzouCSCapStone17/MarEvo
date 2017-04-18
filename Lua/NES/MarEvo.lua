@@ -9,6 +9,11 @@ require "NeuralNet"
 
 createForm(140,40,400,200)
 
+if pool == nil then
+    initializePool()
+end
+
+
 --event.onexit(onExit())
 
 --Begin the infinte fitness loop
@@ -92,7 +97,7 @@ while true do
       end
     end
     gui.drawText(110, 5, "MarEvo", 0xFF000000, 11)
-    gui.drawText(0, 20, "Gen: " .. pool.generation .. " || Group: " .. pool.currentGroup .. " || Agent: " .. pool.currentMarioAgent .. " || " .. math.floor(measured/total*100) .. " %", 0xFF000000, 11)
+    gui.drawText(0, 20, "Gen: " .. pool.generation .. " || Agent: " .. pool.currentMarioAgent .. " || " .. math.floor(measured/total*100) .. " %", 0xFF000000, 11)
     gui.drawText(0, 30, "Fitness: " .. math.floor(rightmost - (pool.currentFrame) / 2 - (timeout + timeoutBonus)*2/3) + (marioScore / 10) .. " || Max Fitness: " .. math.floor(pool.maxFitness), 0xFF000000, 11)
     
     --update frame our way
