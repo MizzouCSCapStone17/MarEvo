@@ -12,3 +12,8 @@ MarEvo.lua is located in: /Lua/NES/MarEvo.lua
 - Lots of tests and training! More data, more better
   - Generate graphs (preferably real-time) and tables
   - Record movies of training
+  
+- Remove groups?
+- Savestate after each level
+- Differentiate between enemies and block types?
+- Find way to get through getting stuck on blocks
