@@ -26,7 +26,9 @@ _inputs = _inputSize + 1
 _outputs = #_buttons
 
 --number of agents per generation
-_population = 200
+_population = 150
+
+_netGeneration = 0
 
 --deltas for group selection
 _deltaDisjoint = 2.0
@@ -34,33 +36,38 @@ _deltaWeights = 0.4
 _deltaThreshold = 1.0
 
 --how long until a group goes extinct if it doesnt improve
-_staleGroup = 15
+_staleGroup = 10
 
 --chances used in mutation
-_mutateConnectionsChance = 0.25
-_perturbChance = 0.90 --whether or not to increase/decrese weight
-_crossoverChance = 0.75 --chance of mating
+_mutateConnectionsChance = 0.30
+_perturbChance = 0.85 --whether or not to increase/decrese weight
+_crossoverChance = 0.80 --chance of mating
 _linkMutationChance = 2.0
-_nodeMutationChance = 0.50
-_biasMutationChance = 0.40
+_nodeMutationChance = 0.55
+_biasMutationChance = 0.45
 _stepSize = 0.1 --for gradient descent
-_disableMutationChance = 0.4
-_enableMutationChance = 0.2
+_disableMutationChance = 0.35
+_enableMutationChance = 0.25
 
 --how long until timeout
 _timeoutConstant = 30
 
 --if group has died
 _autoTimeout = false
+
 --what happens if group has died
 _noFitness = false
 
---num agents can be in one location and still get good fitness
-_noveltyConstant=1
-_currentNSFitness=0
+--num agents can end in one location and not lose fitness
+_noveltyConstant = 1
+_currentNSFitness = 0
+
+--fitness score weights
+_distanceWeight = 2
+_scoreWeight = 1
+_noveltyWeight = 10
+
+--fitness = 0
 
 --total num of connecting nodes possible for each trait. So output nodes can start at a certain number
 _maxNodes = 1000000
-
---game score used in fitness calculation
-_score = 0

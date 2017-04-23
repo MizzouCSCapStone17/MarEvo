@@ -17,9 +17,7 @@ end
 --event.onexit(onExit())
 
 --Begin the infinte fitness loop
-while true do
-  --collision = memory.readbyte(0x490)
-  --gui.text(0,140,collision)
+while true do  
     
   gui.drawBox(0, 0, 300, 50, 0xFFFFFFFF, 0xFFFFFFFF)
   
@@ -56,6 +54,14 @@ while true do
     
     --give a timeout/living bonus based on every 4 frames
     local timeoutBonus = pool.currentFrame / 4
+    
+    --collided = getCollision()
+    --[[gui.drawText(10,80, "Collided =" .. memory.readbyte(0x490))
+    if timeout + timeoutBonus <= 3 and timeout + timeoutBonus > 0 and collided then
+      tempController = controller
+      tempController["A"] = true
+      joypad.set(tempController, 1)
+    end]] 
     
     --if agent did not finish within the timeout, end the run
     if timeout + timeoutBonus <= 0 or math.floor(rightmost - (pool.currentFrame) / 2 - (timeout + timeoutBonus)*2/3) + (marioScore / 10) < -200 then

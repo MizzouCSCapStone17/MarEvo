@@ -1,5 +1,63 @@
 require "Mutate"
 require "Fitness"
+require "Inputs"
+require "IO"
+
+function findMaxFitnessForGeneration()
+		local generationMaxFitness=0
+		local generationDistanceFitness=0
+		for n,groups in pairs(pool.group) do
+		for m,marioAgents in pairs(pool.group.marioAgents) do
+			
+			if marioAgent.distanceFitness > generationDistanceFitness then
+				generationDistanceFitness = marioAgent.distanceFitness
+			end
+
+			if marioAgent.fitness > generationMaxFitness then
+				generationMaxFitness = marioAgent.fitness
+			end
+		end
+	end
+end
+
+function setNoveltyFitness()
+	local file = io.open("Fitness.csv", "a")
+	local nspCount = 0
+  
+	for loc,set in pairs(pool.landscape) do
+		local count = 0
+		for ga,value in pairs(set) do
+        	count = count + 1
+		end
+		if count <= tonumber(forms.gettext(noveltyConstantText)) then
+			nspCount = nspCount + 1
+		 	for ga,value in pairs(set) do
+        local group = math.floor(tonumber(ga) / 100)
+        local marioAgent = tonumber(ga) % 100
+
+				pool.group[group].marioAgents[marioAgent].fitness = pool.group[group].marioAgents[marioAgent].fitness + (tonumber((forms.gettext(noveltyConstantText)) - count) * tonumber(forms.gettext(noveltyWeight)))
+			end
+		end
+	end
+  
+	file:write(pool.generation ..","..tostring(nspCount).. "\n")
+	console.writeline("NSP: " .. nspCount)
+	file:close()
+end
+
+function gainNoveltyFitness(location)
+	if pool.generation > 0 then
+		local count = 0
+		if pool.oldLandscape[location] ~= nil then
+			for k,v in pairs(pool.oldLandscape[location]) do
+        count = count + 1
+			end
+		end
+		if count <= tonumber(forms.gettext(noveltyConstantText)) then
+			_currentNSFitness = _currentNSFitness + 1
+		end
+	end
+end
 
 --determine if neuron val is +/-
 function sigmoid(x)
@@ -95,6 +153,8 @@ function basicMarioAgent()
     
     return marioAgent
 end
+
+
 
 --create new trait, like a gene
 function newTrait()
@@ -262,6 +322,7 @@ end
 --get outpur from network based on inputs
 function evaluateNeuralNet(nn, inputs)
     table.insert(inputs, 1)
+    
     if #inputs ~= _inputs then
         print("Wrong num of neural net inputs.")
         return {}
@@ -323,11 +384,17 @@ function evaluateCurrent()
     joypad.set(controller, 1)
 end
 
+function agentAlreadyRan()
+  local group = pool.group[pool.currentGroup]
+  local marioAgent = group.marioAgents[pool.currentMarioAgent]
+    
+  return marioAgent.ran
+end
 function nextMarioAgent()
     pool.currentMarioAgent = pool.currentMarioAgent + 1
     if pool.currentMarioAgent > #pool.group[pool.currentGroup].marioAgents then
         pool.currentMarioAgent = 1
-        pool.currentGroup = pool.currentGroup+1
+        pool.currentGroup = pool.currentGroup + 1
         if pool.currentGroup > #pool.group then
             newGeneration()
             pool.currentGroup = 1
@@ -335,41 +402,85 @@ function nextMarioAgent()
     end
 end
 
+function percentCompleted()
+  local total = 0
+  local measured = 0
+  
+  for _,group in pairs(pool.group) do
+    for _,marioAgent in pairs(group.marioAgents) do
+      total = total + 1
+      if marioAgent.ran then
+        measured = measured + 1
+      end
+    end
+  end
+  
+  return math.floor(measured/total*100)
+end
+
 function newGeneration()
-    cullGroup(false) -- Cull the bottom half of each group
-    rankGlobally()
-    removeStaleGroup()
-    rankGlobally()
-    for s = 1,#pool.group do
-        local group = pool.group[s]
-        calculateAverageFitness(group)
+  --if forms.ischecked(noveltyIsOn) then
+		setNoveltyFitness()
+	--end
+  
+	for loc,set in pairs(pool.landscape) do
+		pool.oldLandscape[loc] = {}
+		for sg,value in pairs(set) do
+        	pool.oldLandscape[loc][sg] = true
+		end
+	end
+  
+	--findMaxFitnessForGeneration()
+  pool.landscape={}
+  
+  
+  cullGroup(false) -- Cull the bottom half of each group
+  rankGlobally()
+  removeStaleGroup()
+  rankGlobally()
+  
+  for s = 1,#pool.group do
+    local group = pool.group[s]
+    calculateAverageFitness(group)
+  end
+  
+  removeWeakGroup()
+  
+  local sum = totalAverageFitness()
+  local children = {}
+  
+  for s = 1,#pool.group do
+    local group = pool.group[s]
+    breed = math.floor(group.averageFitness / sum * _population) - 1
+    for i=1,breed do
+      table.insert(children, breedChild(group))
     end
-    removeWeakGroup()
-    local sum = totalAverageFitness()
-    local children = {}
-    for s = 1,#pool.group do
-        local group = pool.group[s]
-        breed = math.floor(group.averageFitness / sum * _population) - 1
-        for i=1,breed do
-            table.insert(children, breedChild(group))
-        end
-    end
-    cullGroup(true) -- Cull all but the top member of each group
-    while #children + #pool.group < _population do
-        local group = pool.group[math.random(1, #pool.group)]
-        table.insert(children, breedChild(group))
-    end
-    for c=1,#children do
-        local child = children[c]
-        addToGroup(child)
-    end
+  end
+  
+  cullGroup(true) -- Cull all but the top member of each group
+  
+  while #children + #pool.group < _population do
+    local group = pool.group[math.random(1, #pool.group)]
+    table.insert(children, breedChild(group))
+  end
+  for c=1,#children do
+    local child = children[c]
+    addToGroup(child)
+  end
     
-    writeFile("Pools/gen" .. pool.generation .. "." .. marioWorld .. "-".. marioLevel .. ".pool")
-    
-    pool.generation = pool.generation + 1
+  pool.generation = pool.generation + 1
+  
+  writeFile("Pools/gen" .. pool.generation .. "." .. marioWorld .. "-".. marioLevel .. ".pool")
+  writeMutations()
+  writeAvgNumNeurons()
+  writeAvgNumTraits()
+  writeAvgGroupFitness()
+  writeNumGroups()
+  writeMaxFitness()
 
 end
 
+--breeds a new agent from a given group, either through crossover and a simple copy
 function breedChild(group)
     local child = {}
     if math.random() < _crossoverChance then
@@ -386,31 +497,39 @@ function breedChild(group)
     return child
 end
 
+--finds random neuron from some list of traits
 function randomNeuron(traits, nonInput)
     local neurons = {}
+    --add all inputs
     if not nonInput then
         for i=1,_inputs do
             neurons[i] = true
         end
     end
+    --add all outputs
     for o=1,_outputs do
         neurons[_maxNodes+o] = true
     end
     for i=1,#traits do
+        --add seperate gene inputs
         if (not nonInput) or traits[i].into > _inputs then
             neurons[traits[i].into] = true
         end
+        --add seperate gene outputs
         if (not nonInput) or traits[i].out > _inputs then
             neurons[traits[i].out] = true
         end
     end
 
     local count = 0
+    --count how many neurons we came up with
     for _,_ in pairs(neurons) do
         count = count + 1
     end
+    --generate random number inside this amount
     local n = math.random(1, count)
     
+    --find the random neuron
     for k,v in pairs(neurons) do
         n = n-1
         if n == 0 then
@@ -457,6 +576,7 @@ function crossover(g1, g2)
 end
 
 
+--Removes agents from a group. If cut to one, then one agent remians in group
 function cullGroup(cutToOne)
     for s = 1,#pool.group do
         local group = pool.group[s]
@@ -475,6 +595,7 @@ function cullGroup(cutToOne)
     end
 end
 
+--removes groups that have not improved
 function removeStaleGroup()
     local survived = {}
 
@@ -484,18 +605,19 @@ function removeStaleGroup()
         table.sort(group.marioAgents, function (a,b)
             return (a.fitness > b.fitness)
         end)
-        
+        --look at fitness from top agent in group and see if higher that the current group top fitness
         if group.marioAgents[1].fitness > group.topFitness then
             group.topFitness = group.marioAgents[1].fitness
             group.staleness = 0
         else
             group.staleness = group.staleness + 1
         end
+        --if group is below the stale threshold or has set a new max fitness, then they do not get voted off the island
         if group.staleness < _staleGroup or group.topFitness >= pool.maxFitness then
             table.insert(survived, group)
         end
     end
-
+    --num of groups now is equal to only the survivors
     pool.group = survived
 end
 
@@ -516,6 +638,8 @@ end
 
 function initializePool()
     pool = newPool()
+    
+    initializeFitnessFile()
 
     for i=1, _population do
         basic = basicMarioAgent()
@@ -527,9 +651,14 @@ end
 
 function initializeRun()
     savestate.load(_state)
-    rightmost = 0
+    furthestDistance = 0
     pool.currentFrame = 0
     timeout = _timeoutConstant
+    _currentNSFitness = 0
+    getPositions()
+    getScore()
+    netX = marioX
+    --netScore = marioScore
     clearJoypad()
     
     local group = pool.group[pool.currentGroup]
@@ -544,154 +673,4 @@ function clearJoypad()
         controller[_buttons[b]] = false
     end
   joypad.set(controller, 1)
-end
-
-function displayMarioAgent(marioAgent)
-    local nn = marioAgent.nn
-    local cells = {}
-    local i = 1
-    local cell = {}
-    --finds all visible cells
-    for dy=-_boxRadius,_boxRadius do
-        for dx=-_boxRadius,_boxRadius do
-            cell = {}
-            cell.x = 120+16*dx
-            cell.y = 184+16*dy
-            cell.value = nn.neurons[i].value
-            cells[i] = cell
-            i = i + 1
-        end
-    end
-    --dinds the bias cell
-    local biasCell = {}
-    biasCell.x = 5
-    biasCell.y = 150
-    biasCell.value = nn.neurons[_inputs].value
-    cells[_inputs] = biasCell
-    
-    gui.drawIcon('controller.ico', 0, 0, 160, 128)
-    --draws all outputs onto controller
-    for o = 1,_outputs do
-        cell = {}
-        if o == 1 then
-          cell.x = 90
-          cell.y = 72
-        elseif o == 2 then
-          cell.x = 106
-          cell.y = 72
-        elseif o == 3 then
-          cell.x = 20
-          cell.y = 60
-        elseif o == 4 then
-          cell.x = 20
-          cell.y = 80
-        elseif o == 5 then
-          cell.x = 8
-          cell.y = 68
-        else
-          cell.x = 34
-          cell.y = 68
-        end
-        --cell.x = 10 + 16 * o
-        --cell.y = 60
-        cell.value = nn.neurons[_maxNodes + o].value
-        cells[_maxNodes+o] = cell
-        local color
-        if cell.value > 0 then
-            color = 0xFF00FF00
-        else
-            color = 0xFFFFFFFF
-        end
-    end
-    
-    --finds cells of all neurons
-    for n,neuron in pairs(nn.neurons) do
-        cell = {}
-        if n > _inputs and n <= _maxNodes then
-            cell.x = 140
-            cell.y = 40
-            cell.value = neuron.value
-            cells[n] = cell
-        end
-    end
-    
-    --finds lines between input,output,and hidden nodes
-    for n=1,4 do
-        for _,trait in pairs(marioAgent.traits) do
-            if trait.enabled then
-                local c1 = cells[trait.into]
-                local c2 = cells[trait.out]
-                if trait.into > _inputs and trait.into <= _maxNodes then
-                    c1.x = 0.75*c1.x + 0.25*c2.x
-                    if c1.x >= c2.x then
-                        c1.x = c1.x - 40
-                    end
-                    if c1.x < 90 then
-                        c1.x = 90
-                    end
-                    
-                    if c1.x > 220 then
-                        c1.x = 220
-                    end
-                    c1.y = 0.75*c1.y + 0.25*c2.y
-                    
-                end
-                if trait.out > _inputs and trait.out <= _maxNodes then
-                    c2.x = 0.25*c1.x + 0.75*c2.x
-                    if c1.x >= c2.x then
-                        c2.x = c2.x + 40
-                    end
-                    if c2.x < 90 then
-                        c2.x = 90
-                    end
-                    if c2.x > 220 then
-                        c2.x = 220
-                    end
-                    c2.y = 0.25*c1.y + 0.75*c2.y
-                end
-            end
-        end
-    end
-    
-    --draws all cells
-    for n,cell in pairs(cells) do
-        if n > _inputs or cell.value ~= 0 then
-            local color = math.floor((cell.value+1)/2*256)
-            if color > 255 then color = 255 end
-            if color < 0 then color = 0 end
-            local opacity = 0xFF000000
-            if cell.value == 0 then
-                opacity = 0x50000000
-            end
-            color = opacity + color*0x10000 + color*0x100 + color
-            gui.drawBox(cell.x-8,cell.y-8,cell.x+8,cell.y+8,opacity,color)
-        end
-    end
-    
-    --draws all lines
-    for _,trait in pairs(marioAgent.traits) do
-        if trait.enabled then
-            local c1 = cells[trait.into]
-            local c2 = cells[trait.out]
-            local opacity = 0xA0000000
-            if c1.value == 0 then
-                opacity = 0x20000000
-            end
-            
-            local color = 0x80-math.floor(math.abs(sigmoid(trait.weight))*0x80)
-            if trait.weight > 0 then 
-                color = opacity + 0x8000 + 0x10000*color
-            else
-                color = opacity + 0x800000 + 0x100*color
-            end
-            gui.drawLine(c1.x+1, c1.y, c2.x-3, c2.y, color)
-        end
-    end
-    --[[
-        local pos = 50
-        for mutation,rate in pairs(marioAgent.mutationRates) do
-            gui.drawText(80, pos, mutation .. ": " .. rate, 0xFF000000, 10)
-            pos = pos + 8
-        end
-      ]]
 end

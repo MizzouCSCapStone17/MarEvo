@@ -1,7 +1,7 @@
 --get mario position and a few things about him
 function getPositions()
     marioX = memory.readbyte(0x6D) * 0x100 + memory.readbyte(0x86)
-    marioY = memory.readbyte(0x03B8)+16
+    marioY = memory.readbyte(0x03B8) + 16
     
     screenX = memory.readbyte(0x03AD)
 		screenY = memory.readbyte(0x03B8)
@@ -12,11 +12,11 @@ function getTile(dx, dy)
     --distance plus what page they are on
     local x = marioX + dx + 8
     local y = marioY + dy - 16
-    local page = math.floor(x/256)%2
+    local page = math.floor(x / 256) % 2
     
-    local subx = math.floor((x%256)/16)
-    local suby = math.floor((y - 32)/16)
-    local addr = 0x500 + page*13*16+suby*16+subx
+    local subx = math.floor((x % 256) / 16)
+    local suby = math.floor((y - 32) / 16)
+    local addr = 0x500 + page * 13 * 16 + suby * 16 + subx
         
     if suby >= 13 or suby < 0 then
       return 0
@@ -47,10 +47,35 @@ function getSprites()
 end
 
 function getLevelInfo()
-    marioScore = memory.readbyte(0x7D8)*100000 + memory.readbyte(0x07D9)*10000 + memory.readbyte(0x07DA)*1000 + memory.readbyte(0x07DB)*100 + memory.readbyte(0x07DC)*10 + memory.readbyte(0x07DC)*1
 		marioLevel = memory.readbyte(0x075C)
 		marioWorld = memory.readbyte(0x075F)
 end
+
+function getScore()
+  marioScore = memory.readbyte(0x7D8)*100000 + memory.readbyte(0x07D9)*10000 + memory.readbyte(0x07DA)*1000 + memory.readbyte(0x07DB)*100 + memory.readbyte(0x07DC)*10 + memory.readbyte(0x07DC)*1
+end
+
+function getMarioState()
+		-- 0x000E	Player's state
+		local states = { 
+			'Leftmost of screen',
+			'Climbing vine',
+			'Entering reversed-L pipe',
+			'Going down a pipe',
+			'Autowalk',
+			'Autowalk',
+			'Player dies',
+			'Entering area',
+			'Normal',
+			'Cannot move',
+			--' ',
+			'Dying',
+			'Palette cycling, can\'t move'
+		}
+		local stateCode = memory.readbyte(0xE)
+
+		return states[stateCode]
+	end
 
 function getInputs()
     getPositions()
@@ -87,6 +112,16 @@ function getInputs()
     --mariovy = memory.read_s8(0x7D)
     
     return inputs
+end
+
+function getCollision()
+  local val = memory.readbyte(0x490)
+  local collided = false
+  if val == 255 then
+    collided = false
+  else
+    collided = true
+  end
 end
 
 function playing()

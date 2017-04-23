@@ -1,4 +1,79 @@
 --For all Input/Output and file manipulations--
+function writeMutations()
+  local file = io.open("Mutations.csv", "a")
+  
+  file:write(pool.generation .. "\n")
+  for n,group in pairs(pool.group) do
+    file:write(#group.marioAgents .. "\n")
+    for m,marioAgent in pairs(group.marioAgents) do
+      for mutation,rate in pairs(marioAgent.mutationRates) do
+        file:write(m .. ",")
+				file:write(mutation .. ",")
+				file:write(rate .. "\n")
+			end
+    end
+  end
+  --file:write("done\n")
+  file:close()
+end
+
+function writeAvgNumNeurons()
+  local totalNeurons = 0
+  local file = io.open("Neurons.csv", "a")
+  file:write(pool.generation .. ",")
+  
+  for n,group in pairs(pool.group) do
+    for m,marioAgent in pairs(group.marioAgents) do
+      totalNeurons = totalNeurons + marioAgent.maxNeuron
+    end
+  end
+  file:write(totalNeurons / 300 .. "\n")
+  --file:write("done\n")
+  file:close()
+end
+
+function writeAvgNumTraits()
+  local totalTraits = 0
+  local file = io.open("Traits.csv", "a")
+  file:write(pool.generation .. ",")
+  
+  for n,group in pairs(pool.group) do
+    for m,marioAgent in pairs(group.marioAgents) do
+      totalTraits = totalTraits + #marioAgent.traits
+    end
+  end
+  file:write(totalTraits / 300 .. "\n")
+  --file:write("done\n")
+  file:close()
+end
+
+function writeAvgGroupFitness()
+  local file = io.open("GroupFitnesses.csv", "a")
+  file:write(pool.generation .. ",")
+  for n,group in pairs(pool.group) do
+    file:write(n .. "\n")
+    file:write(group.averageFitness .. "\n")
+  end
+  --file:write("done\n")
+  file:close()
+end
+
+function writeNumGroups()
+  local file = io.open("NumGroups.csv", "a")
+	file:write(pool.generation .. ",")
+	file:write(#pool.group .. "\n")
+  --file:write("done\n")
+  file:close()
+end
+
+function writeMaxFitness()
+  local file = io.open("MaxFitnesses.csv", "a")
+  file:write(pool.generation .. ",")
+	file:write(pool.maxFitness .. "\n")
+  --file:write("done\n")
+  file:close()
+end
+  
 
 function writeFile(filename)
     local file = io.open(filename, "w")
@@ -119,4 +194,10 @@ end
 function loadPool()
 	local filename = forms.gettext(saveLoadFile)
 	loadFile("Pools/"..filename)
+end
+
+function initializeFitnessFile()
+	local file = io.open("Fitness.csv", "w")
+	file:write("-1" ..","..tostring(0).. "\n")
+	file:close()
 end

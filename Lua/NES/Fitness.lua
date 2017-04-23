@@ -1,3 +1,5 @@
+
+
 --ranks all agents and determines one w/ highest fitness. higher rank = higher fitness
 function rankGlobally()
     local global = {}
@@ -18,10 +20,10 @@ end
 
 --determines if current agent has fitness measured
 function fitnessAlreadyMeasured()
-    local group = pool.group[pool.currentGroup]
-    local marioAgent = group.marioAgents[pool.currentMarioAgent]
+  local group = pool.group[pool.currentGroup]
+  local marioAgent = group.marioAgents[pool.currentMarioAgent]
     
-    return marioAgent.fitness ~= 0
+  return marioAgent.fitness ~= 0
 end
 
 --calculates avg fitness of a group by global rank added up divided by num of agents
@@ -34,6 +36,7 @@ function calculateAverageFitness(group)
     end
     
     group.averageFitness = total / #group.marioAgents
+    
 end
 
 --total is sum of the total avg fitness for each group
@@ -47,16 +50,26 @@ function totalAverageFitness()
     return total
 end
 
-function gainNoveltyFitness(location)
-	if pool.generation > 0 then
-		local count = 0
-		if pool.oldLandscape[location] ~= nil then
-			for k,v in pairs(pool.Oldlandscape[location]) do
-		       	count=count+1
-			end
-		end
-		if count  <= _noveltyConstant then
-			_currentNSFitness = _currentNSFitness+1
-		end
-	end
+function calculateTotalFitness()
+  local distanceFitness = 0
+  local scoreFitness = 0
+  local noveltyFitness = 0
+  local fitnesses = {0, 0, 0}
+      
+  distanceFitness = tonumber(forms.gettext(distanceWeight)) * (furthestDistance - netX)
+  console.write("Distance: " .. distanceFitness .. "\n")
+    
+  scoreFitness = tonumber(forms.gettext(scoreWeight)) * (marioScore)
+  console.write("Score: " .. scoreFitness .. "\n")
+    
+  noveltyFitness = tonumber(forms.gettext(noveltyWeight)) * (_currentNSFitness)
+  console.write("Novelty: " .. noveltyFitness .. "\n")
+
+  fitnesses[0] = distanceFitness
+  fitnesses[1] = scoreFitness
+  fitnesses[2] = noveltyFitness
+      
+    --table.sort(fitnesses)
+  return fitnesses[0] + fitnesses[1] + fitnesses[2]
+  
 end
