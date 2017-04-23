@@ -26,7 +26,7 @@ _inputs = _inputSize + 1
 _outputs = #_buttons
 
 --number of agents per generation
-_population = 150
+_population = 200
 
 _netGeneration = 0
 
@@ -63,8 +63,8 @@ _noveltyConstant = 1
 _currentNSFitness = 0
 
 --fitness score weights
-_distanceWeight = 2
-_scoreWeight = 1
+_distanceWeight = 1
+_scoreWeight = 0.5
 _noveltyWeight = 10
 
 --fitness = 0

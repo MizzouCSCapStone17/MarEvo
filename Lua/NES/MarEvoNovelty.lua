@@ -68,7 +68,7 @@ while true do
       
     marioAgent.ran = true
     
-    distanceFitness = tonumber(forms.gettext(distanceWeight)) * (furthestDistance - netX)
+    distanceFitness = tonumber(forms.gettext(distanceWeight)) * ((furthestDistance - netX) - pool.currentFrame / 2)
     console.write("Distance: " .. distanceFitness .. "\n")
     scoreFitness = tonumber(forms.gettext(scoreWeight)) * (marioScore)
     console.write("Score: " .. scoreFitness .. "\n")
@@ -82,8 +82,8 @@ while true do
     if furthestDistance > 3186 then
       fitness = fitness + 1000
     end
-    if fitness == 0 then
-      fitness = math.random(-50,-1)
+    if fitness <= 0 then
+      fitness = math.random(-100,-1)
     end
     if _noFitness == true then
       fitness = fitness - math.random(20,40)
@@ -114,7 +114,7 @@ while true do
   gui.drawText(110, 5, "MarEvo", 0xFF000000, 11, 14)
   gui.drawText(0, 20, "Gen: " .. pool.generation .. " || Group: " .. pool.currentGroup .. " || Agent: " .. pool.currentMarioAgent .. " || " .. percentCompleteWithGen .. " %", 0xFF000000, 11, 10)
   
-  distanceFitness = tonumber(forms.gettext(distanceWeight)) * (furthestDistance - netX)
+  distanceFitness = tonumber(forms.gettext(distanceWeight)) * ((furthestDistance - netX) - pool.currentFrame / 2)
   scoreFitness = tonumber(forms.gettext(scoreWeight)) * (marioScore)
   noveltyFitness = tonumber(forms.gettext(noveltyWeight)) * (_currentNSFitness)
   fitness = distanceFitness + scoreFitness + noveltyFitness
