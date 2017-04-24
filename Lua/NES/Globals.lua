@@ -32,9 +32,9 @@ _population = 200
 _netGeneration = 0
 
 --deltas for group selection
+_dThreshold = 1.0
 _dDisjoint = 2.0
 _dWeights = 0.4
-_deltaThreshold = 1.0
 
 --how long until a group goes extinct if it doesnt improve
 _staleGroupThreshold = 10
