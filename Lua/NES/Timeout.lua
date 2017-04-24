@@ -1,25 +1,4 @@
 --checks if coordinate has not been seen by agent already
-function noveltyTimeout()
-  local location = 0
-  local group = 0
-	
-  --Gain cordinates and species with hashes
-	location = math.floor(marioY / 64) * 10000 + memory.readbyte(0x6D) * 1000 + math.floor(memory.readbyte(0x86) / 64)
-	group = pool.currGroup*100 + pool.currMarioAgent
-
-	if pool.landscape[tostring(location)] == nil then
-		pool.landscape[tostring(location)] = {}
-	end
-
-	if not pool.landscape[tostring(location)][tostring(group)] == true then
-		pool.landscape[tostring(location)][tostring(group)] = true
-    
-    timeout = _timeoutConstant
-    
-    gainNoveltyFitness(tostring(location))
-	end
-end
-
 function noveltyTimeoutFunction()
   local cordLocation = 0
   local cordGroup = 0
@@ -40,6 +19,7 @@ function noveltyTimeoutFunction()
 	end
 end
 
+--checks if mario has not improved distance
 function marioTimeoutFunction()
 	if marioX > furthestDistance then
 		furthestDistance = marioX

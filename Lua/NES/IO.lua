@@ -2,7 +2,7 @@
 function writeMutations()
   local file = io.open("Mutations.csv", "a")
   
-  file:write(pool.generation .. "\n")
+  file:write(pool.gen .. "\n")
   for n,group in pairs(pool.groups) do
     file:write(#group.marioAgents .. "\n")
     for m,marioAgent in pairs(group.marioAgents) do
@@ -20,7 +20,7 @@ end
 function writeAvgNumNeurons()
   local totalNeurons = 0
   local file = io.open("Neurons.csv", "a")
-  file:write(pool.generation .. ",")
+  file:write(pool.gen .. ",")
   
   for n,group in pairs(pool.groups) do
     for m,marioAgent in pairs(group.marioAgents) do
@@ -35,7 +35,7 @@ end
 function writeAvgFitness()
   local totalFitness = 0
   local file = io.open("AvgFitness.csv", "a")
-  file:write(pool.generation .. ",")
+  file:write(pool.gen .. ",")
   
   for n,group in pairs(pool.groups) do
     for m,marioAgent in pairs(group.marioAgents) do
@@ -50,7 +50,7 @@ end
 function writeAvgNumTraits()
   local totalTraits = 0
   local file = io.open("Traits.csv", "a")
-  file:write(pool.generation .. ",")
+  file:write(pool.gen .. ",")
   
   for n,group in pairs(pool.groups) do
     for m,marioAgent in pairs(group.marioAgents) do
@@ -64,7 +64,7 @@ end
 
 function writeAvgGroupFitness()
   local file = io.open("GroupFitnesses.csv", "a")
-  file:write(pool.generation .. ",")
+  file:write(pool.gen .. ",")
   for n,group in pairs(pool.groups) do
     file:write(n .. "\n")
     file:write(group.avgFitness .. "\n")
@@ -75,7 +75,7 @@ end
 
 function writeNumGroups()
   local file = io.open("NumGroups.csv", "a")
-	file:write(pool.generation .. ",")
+	file:write(pool.gen .. ",")
 	file:write(#pool.groups .. "\n")
   --file:write("done\n")
   file:close()
@@ -83,7 +83,7 @@ end
 
 function writeMaxFitness()
   local file = io.open("MaxFitnesses.csv", "a")
-  file:write(pool.generation .. ",")
+  file:write(pool.gen .. ",")
 	file:write(pool.maxFitness .. "\n")
   --file:write("done\n")
   file:close()
@@ -92,7 +92,7 @@ end
 
 function writeFile(filename)
     local file = io.open(filename, "w")
-	file:write(pool.generation .. "\n")
+	file:write(pool.gen .. "\n")
 	file:write(pool.maxFitness .. "\n")
 	file:write(#pool.groups .. "\n")
   for n,group in pairs(pool.groups) do
@@ -131,10 +131,10 @@ end
 function loadFile(filename)
   local file = io.open(filename, "r")
   --Create a new trait pool
-	pool = newPool()
+	pool = createNewPool()
 
 	--Read the generation
-	pool.generation = file:read("*number")
+	pool.gen = file:read("*number")
 
 	--Gather MaxFitness
 	pool.maxFitness = file:read("*number")
@@ -159,13 +159,13 @@ function loadFile(filename)
 		--]]
     local numGroups = file:read("*number")
     for s=1,numGroups do
-      local group = newGroup()
+      local group = createNewGroup()
       table.insert(pool.groups, group)
       group.topFitness = file:read("*number")
       group.staleness = file:read("*number")
       local numMarioAgents = file:read("*number")
       for g=1,numMarioAgents do
-        local marioAgent = newMarioAgent()
+        local marioAgent = createNewMarioAgent()
         table.insert(group.marioAgents, marioAgent)
         marioAgent.fitness = file:read("*number")
         marioAgent.maxNeurons = file:read("*number")
@@ -176,7 +176,7 @@ function loadFile(filename)
         end
         local numTraits = file:read("*number")
         for n=1,numTraits do
-          local trait = newTrait()
+          local trait = createNewTrait()
           table.insert(marioAgent.traits, trait)
           local enabled
           trait.inn, trait.out, trait.weight, trait.modernization, enabled = file:read("*number", "*number", "*number", "*number", "*number")
@@ -192,10 +192,10 @@ function loadFile(filename)
     file:close()
 
 	while fitnessAlreadyMeasured() do
-		nextMarioAgent()
+		findNextMarioAgent()
 	end
-	initializeRun()
-	pool.currentFrame = pool.currentFrame + 1
+	initRun()
+	pool.currFrame = pool.currFrame + 1
 end
 
 --Save pool based on saveLoadFile name

@@ -46,15 +46,18 @@ function getSprites()
   return sprites
 end
 
+--get current world and level
 function getLevelInfo()
   marioLevel = memory.readbyte(0x0760)
   marioWorld = memory.readbyte(0x075F)
 end
 
+--get current mario score
 function getScore()
   marioScore = memory.readbyte(0x7D8) * 100000 + memory.readbyte(0x07D9) * 10000 + memory.readbyte(0x07DA) * 1000 + memory.readbyte(0x07DB) * 100 + memory.readbyte(0x07DC) * 10 + memory.readbyte(0x07DC) * 1
 end
 
+--get mario's current state
 function getMarioState()
   local stateCode = 0
   local states = {}
@@ -79,6 +82,7 @@ function getMarioState()
   return states[stateCode]
 end
 
+--get all inputs/tiles
 function getInputs()
   local inputs = {}
   
@@ -113,6 +117,7 @@ function getInputs()
   return inputs
 end
 
+--checks if mario has collided with something
 function getCollision()
   local value = memory.readbyte(0x490)
   local collided = false

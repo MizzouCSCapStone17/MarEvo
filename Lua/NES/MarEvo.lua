@@ -7,110 +7,126 @@ require "Timeout"
 require "Mutate"
 require "NeuralNet"
 
-createForm(140,40,400,200)
+createForm(140,40,375,450)
 
 if pool == nil then
-    initializePool()
+    initPool()
 end
-
-
---event.onexit(onExit())
 
 --Begin the infinte fitness loop
 while true do  
     
-  gui.drawBox(0, 0, 300, 50, 0xFFFFFFFF, 0xFFFFFFFF)
+  gui.drawBox(0, 0, 300, 40, 0xFFFFFFFF, 0xFFFFFFFF)
   
   --Get current group and agent
-  local group = pool.group[pool.currentGroup]
-  local marioAgent = group.marioAgents[pool.currentMarioAgent]
+  local group = pool.groups[pool.currGroup]
+  local marioAgent = group.marioAgents[pool.currMarioAgent]
     
   --Displays the network for the current agent
   if forms.ischecked(showNeuralNet) then
-    displayMarioAgent(marioAgent)
+    displayNetwork(marioAgent)
+  end
+  --Displays the muatation rates for the current agent
+  if forms.ischecked(showMutationRates) then
+    displayMutationRates(marioAgent)
+  end
+  
+  --Evaulate the current agent every 4 frames
+  if pool.currFrame % 4 == 0 then
+    evalCurrentMarioAgent()
   end
     
-  --marioScore = getMarioScore()
-  --gui.text(0, 150, "Mario has score " .. marioScore)
+  --Set the output based on what network picks
+  joypad.set(controller, 1)
     
-  --if we can currently in play (not at loading screen/mario dead/etc)
-  --if(playing()) then
-    --Evaulate the current agent every 4 frames
-    if pool.currentFrame%4 == 0 then
-      evaluateCurrent()
-    end
+  getPositions()
+  getLevelInfo()
+  getScore()
+  marioState = getMarioState()
+	local marioDead = marioState == 'Dying' or marioState == 'Player dies'
     
-    --Set the output based on what network picks
-    joypad.set(controller, 1)
+  --refresh timeout
+  if pool.currFrame % 3 == 0 then
+    noveltyTimeoutFunction()
+    marioTimeoutFunction()
+  end
+  timeout = timeout - 1
     
-    getPositions()
-    getLevelInfo()
+  --give a living bonus based on every 3 frames
+  local timeoutBonus = pool.currFrame / 3
     
-    --refresh timeout
-    if pool.currentFrame%3 == 0 then
-      marioTimeout()
-    end
-    timeout = timeout - 1
+  timeoutTotal = timeout + timeoutBonus
     
-    --give a timeout/living bonus based on every 4 frames
-    local timeoutBonus = pool.currentFrame / 4
-    
-    --collided = getCollision()
-    --[[gui.drawText(10,80, "Collided =" .. memory.readbyte(0x490))
-    if timeout + timeoutBonus <= 3 and timeout + timeoutBonus > 0 and collided then
-      tempController = controller
-      tempController["A"] = true
-      joypad.set(tempController, 1)
-    end]] 
-    
-    --if agent did not finish within the timeout, end the run
-    if timeout + timeoutBonus <= 0 or math.floor(rightmost - (pool.currentFrame) / 2 - (timeout + timeoutBonus)*2/3) + (marioScore / 10) < -200 then
-      local fitness = (rightmost - pool.currentFrame / 2) + (marioScore / 15)
-      if rightmost > 3186 then
-        fitness = fitness + 1000
-      end
-      if fitness == 0 then
-        fitness = -1
-      end
-      marioAgent.fitness = fitness
-        
-      if fitness > pool.maxFitness then
-        pool.maxFitness = fitness
-        writeFile("Pools/gen" .. pool.generation .. "." .. marioWorld .. "-".. marioLevel .. ".pool")
-      end
-        
-      console.write("Gen " .. pool.generation .. ". Group " .. pool.currentGroup .. ". Agent " .. pool.currentMarioAgent .. ". Fitness: " .. fitness .. "\n")
+  --if agent has timed out or died
+  if timeoutTotal <= 0 or _autoTimeout == true or marioDead then
+    _autoTimeout = false
+    local distanceFitness = 0
+    local scoreFitness = 0
+    local noveltyFitness = 0
+    local fitness = 0
+    --local fitnesses = {0, 0, 0}
       
-      pool.currentGroup = 1
-      pool.currentMarioAgent = 1
+    marioAgent.ran = true
+    
+    distanceFitness = tonumber(forms.gettext(distanceWeight)) * ((furthestDistance - netX) - pool.currFrame / 2) * (math.random(8, 12) / 10)
+    console.write("Distance: " .. distanceFitness .. "\n")
+    scoreFitness = tonumber(forms.gettext(scoreWeight)) * (marioScore) * (math.random(8, 12) / 10)
+    console.write("Score: " .. scoreFitness .. "\n")
+    noveltyFitness = tonumber(forms.gettext(noveltyWeight)) * (_currentNSFitness)
+    console.write("Novelty: " .. noveltyFitness .. "\n")
+    
+    fitness = distanceFitness + scoreFitness + noveltyFitness
+    --fitness = calcTotalFitness()
+    
+    --bonus for finishing the level
+    if furthestDistance > 3186 then
+      fitness = fitness + 1000
+    end
+    if fitness <= 0 then
+      fitness = math.random(-100,-1)
+    end
+    if _noFitness == true then
+      fitness = fitness - math.random(20,40)
+    end
       
-      while fitnessAlreadyMeasured() do
-        nextMarioAgent()
-      end
+    marioAgent.fitness = fitness
+      
+    if fitness > pool.maxFitness then
+      pool.maxFitness = fitness
+      writeFile("Pools/maxFitnessGen." .. marioWorld .. "-".. marioLevel .. ".pool")
+    end
+      
+    console.write("Gen " .. pool.gen .. ". Group " .. pool.currGroup .. ". Agent " .. pool.currMarioAgent .. ". Fitness: " .. fitness .. "\n")
+      
+    pool.currGroup = 1
+    pool.currMarioAgent = 1
+      
+    while marioAgentRan() do
+      findNextMarioAgent()
+    end
         
-      initializeRun()
-    end
+    initRun()
+  end
     
-    --count all the agents that have already run
-    local measured = 0
-    local total = 0
-    for _,group in pairs(pool.group) do
-      for _,marioAgent in pairs(group.marioAgents) do
-        total = total + 1
-        if marioAgent.fitness ~= 0 then
-          measured = measured + 1
-        end
-      end
-    end
-    gui.drawText(110, 5, "MarEvo", 0xFF000000, 11)
-    gui.drawText(0, 20, "Gen: " .. pool.generation .. " || Agent: " .. pool.currentMarioAgent .. " || " .. math.floor(measured/total*100) .. " %", 0xFF000000, 11)
-    gui.drawText(0, 30, "Fitness: " .. math.floor(rightmost - (pool.currentFrame) / 2 - (timeout + timeoutBonus)*2/3) + (marioScore / 10) .. " || Max Fitness: " .. math.floor(pool.maxFitness), 0xFF000000, 11)
+  --the agents that have already run
+  local percentCompleteWithGen = percentCompleted()
+  
+  gui.drawText(110, 5, "MarEvo", 0xFF000000, 11, 14)
+  gui.drawText(0, 20, "Gen: " .. pool.gen .. " || Group: " .. pool.currGroup .. " || Agent: " .. pool.currMarioAgent .. " || " .. percentCompleteWithGen .. " %", 0xFF000000, 11, 10)
+  
+  distanceFitness = tonumber(forms.gettext(distanceWeight)) * ((furthestDistance - netX) - pool.currFrame / 2) * (math.random(8, 12) / 10)
+  scoreFitness = tonumber(forms.gettext(scoreWeight)) * (marioScore) * (math.random(8, 12) / 10)
+  noveltyFitness = tonumber(forms.gettext(noveltyWeight)) * (_currentNSFitness)
+  fitness = math.floor(distanceFitness + scoreFitness + noveltyFitness)
+  --temp_fitness = calcTotalFitness()
+  
+  gui.drawText(0, 30, "Fitness: " .. fitness .. " || Max Fitness: " .. math.floor(pool.maxFitness), 0xFF000000, 11, 10)
     
-    --update frame our way
-    pool.currentFrame = pool.currentFrame + 1
+  --update frame our way
+  pool.currFrame = pool.currFrame + 1
     
-    --update frame actually with the emulator
-    emu.frameadvance();
-  --end
+  --update frame actually with the emulator
+  emu.frameadvance();
 end
-
+  
+      

@@ -70,3 +70,13 @@ _noveltyWeight = 10
 
 --total num of connecting nodes possible for each trait. So output nodes can start at a certain number
 _maxNeurons = 1000000
+
+function inc(value)
+  value = value + 1
+  return value
+end
+
+function dec(value)
+  value = value - 1
+  return value
+end

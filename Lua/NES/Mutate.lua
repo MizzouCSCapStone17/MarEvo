@@ -109,10 +109,10 @@ end
 --set one agent as input and one agent as output for new trait
 function linkMutation(marioAgent, forceBias)
   --random neuron
-  local tempNeuron = randomNeuron(marioAgent.traits, false)
+  local tempNeuron = findRandomNeuron(marioAgent.traits, false)
   --random input neuron
-  local tempNeuron2 = randomNeuron(marioAgent.traits, true)
-  local newLink = newTrait()
+  local tempNeuron2 = findRandomNeuron(marioAgent.traits, true)
+  local newLink = createNewTrait()
   
   if tempNeuron <= _inputs and tempNeuron2 <= _inputs then
     --Both input nodes
