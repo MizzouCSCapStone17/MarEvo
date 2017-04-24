@@ -81,7 +81,7 @@ end
 function playMaxAgent()
 	local maxFitness = 0
 	local maxG, maxA
-	for g,group in pairs(pool.group) do
+	for g,group in pairs(pool.groups) do
 		for a,marioAgent in pairs(group.marioAgents) do
 			if marioAgent.fitness > maxFitness then
 				maxFitness = marioAgent.fitness
@@ -91,13 +91,15 @@ function playMaxAgent()
 		end
 	end
 	
-	pool.currentGroup = maxG
-	pool.currentMarioAgent = maxA
+	pool.currGroup = maxG
+	pool.currMarioAgent = maxA
 	pool.maxFitness = maxFitness
-	--forms.settext(maxFitnessLabel, "Max Fitness: " .. math.floor(pool.maxFitness))
+  
 	initializeRun()
-	pool.currentFrame = pool.currentFrame + 1
-	return
+	
+  pool.currentFrame = pool.currentFrame + 1
+	
+  return
 end
 
 function displayMutationRates(marioAgent)
@@ -157,8 +159,8 @@ function displayNetwork(marioAgent)
         end
         --cell.x = 10 + 16 * o
         --cell.y = 60
-        cell.value = nn.neurons[_maxNodes + o].value
-        cells[_maxNodes+o] = cell
+        cell.value = nn.neurons[_maxNeruons + o].value
+        cells[_maxNeruons+o] = cell
         local color
         if cell.value > 0 then
             color = 0xFF00FF00
@@ -170,7 +172,7 @@ function displayNetwork(marioAgent)
     --finds cells of all neurons
     for n,neuron in pairs(nn.neurons) do
         cell = {}
-        if n > _inputs and n <= _maxNodes then
+        if n > _inputs and n <= _maxNeruons then
             cell.x = 140
             cell.y = 40
             cell.value = neuron.value
@@ -182,9 +184,9 @@ function displayNetwork(marioAgent)
     for n=1,4 do
         for _,trait in pairs(marioAgent.traits) do
             if trait.enabled then
-                local c1 = cells[trait.into]
+                local c1 = cells[trait.inn]
                 local c2 = cells[trait.out]
-                if trait.into > _inputs and trait.into <= _maxNodes then
+                if trait.inn > _inputs and trait.inn <= _maxNeruons then
                     c1.x = 0.75*c1.x + 0.25*c2.x
                     if c1.x >= c2.x then
                         c1.x = c1.x - 40
@@ -199,7 +201,7 @@ function displayNetwork(marioAgent)
                     c1.y = 0.75*c1.y + 0.25*c2.y
                     
                 end
-                if trait.out > _inputs and trait.out <= _maxNodes then
+                if trait.out > _inputs and trait.out <= _maxNeruons then
                     c2.x = 0.25*c1.x + 0.75*c2.x
                     if c1.x >= c2.x then
                         c2.x = c2.x + 40
@@ -234,7 +236,7 @@ function displayNetwork(marioAgent)
     --draws all lines
     for _,trait in pairs(marioAgent.traits) do
         if trait.enabled then
-            local c1 = cells[trait.into]
+            local c1 = cells[trait.inn]
             local c2 = cells[trait.out]
             local opacity = 0xA0000000
             if c1.value == 0 then

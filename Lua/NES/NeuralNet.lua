@@ -4,18 +4,20 @@ require "Inputs"
 require "IO"
 
 function findMaxFitnessForGeneration()
-		local generationMaxFitness=0
-		local generationDistanceFitness=0
-		for n,groups in pairs(pool.group) do
-		for m,marioAgents in pairs(pool.group.marioAgents) do
+  local generationDistanceFitness = 0
+  local generationMaxFitness = 0
+  
+  for n,groups in pairs(pool.groups) do
+		for m,marioAgents in pairs(pool.groups.marioAgents) do
+      
+      if marioAgent.fitness > generationMaxFitness then
+				generationMaxFitness = marioAgent.fitness
+			end
 			
 			if marioAgent.distanceFitness > generationDistanceFitness then
 				generationDistanceFitness = marioAgent.distanceFitness
 			end
-
-			if marioAgent.fitness > generationMaxFitness then
-				generationMaxFitness = marioAgent.fitness
-			end
+      
 		end
 	end
 end
@@ -35,7 +37,7 @@ function setNoveltyFitness()
         local group = math.floor(tonumber(ga) / 100)
         local marioAgent = tonumber(ga) % 100
 
-				pool.group[group].marioAgents[marioAgent].fitness = pool.group[group].marioAgents[marioAgent].fitness + (tonumber((forms.gettext(noveltyConstantText)) - count) * tonumber(forms.gettext(noveltyWeight)))
+				pool.groups[group].marioAgents[marioAgent].fitness = pool.groups[group].marioAgents[marioAgent].fitness + (tonumber((forms.gettext(noveltyConstantText)) - count) * tonumber(forms.gettext(noveltyWeight)))
 			end
 		end
 	end
@@ -61,223 +63,215 @@ end
 
 --determine if neuron val is +/-
 function sigmoid(x)
-    return 2/(1+math.exp(-4.9*x))-1
+  return 2/(1+math.exp(-4.9*x))-1
 end
 
 --a new collection of all groups for all generations
 function newPool()
   local pool = {}
-  pool.group = {}
   pool.generation = 0
-  pool.innovation = _outputs 
-  pool.currentGroup = 1
-  pool.currentMarioAgent = 1
-  pool.currentFrame = 0
-  pool.maxFitness = 0
-    
+  pool.modernization = _outputs 
   pool.landscape = {}
   pool.oldLandscape = {}
-  --stats
-  pool.maxFitnessAgent = {} --Vanillia Best Fitness of this Generation per Genome
-	pool.maxDistanceAgent = {} --Highest Rightmost Fitnes of this Generation per Genome
-	pool.maxNoveltyAgent = {} --Highest Novelty Fitness of this Generation per Genome
-	pool.maxFitnessCollective = {} --Vanillia Best Fitness of this Generation per Genome
-	pool.maxDistanceCollective = {} --Highest Rightmost Fitnes of this Generation per Genome
-	pool.maxNoveltyCollective = {} --Highest Novelty Fitness of this Generation per Genome
-	pool.avgFitnessGenome = {} --Vanillia Best Fitness of this Generation per Genome
-	pool.avgDistanceGenome = {} --Highest Rightmost Fitnes of this Generation per Genome
-	pool.avgNoveltyGenome = {} --Highest Novelty Fitness of this Generation per Genome
-	pool.avgFitnessCollective = {} --Vanillia Best Fitness of this Generation per Genome
-	pool.avgDistanceCollective = {} --Highest Rightmost Fitnes of this Generation per Genome
-	pool.avgNoveltyCollective = {} --Highest Novelty Fitness of this Generation per Genome
-	NetWorld = marioWorld
-	NetLevel = marioLevel
-	half = false
-    
-    return pool
+  pool.groups = {}
+  pool.currGroup = 1
+  pool.currMarioAgent = 1
+  pool.currentFrame = 0
+  pool.maxFitness = 0
+  
+  return pool
 end
 
---increase the innovation of the pool
-function newInnovation()
-    pool.innovation = pool.innovation + 1
-    return pool.innovation
+--increase the modernization of the pool
+function newModernization()
+  pool.modernization = pool.modernization + 1
+  return pool.modernization
 end
 
 --a new agent. the thing that evolves
 function newMarioAgent()
-    local marioAgent = {}
-    marioAgent.traits = {} --like genes
-    marioAgent.fitness = 0 --how good the agent is
-    marioAgent.distanceFitness = 0
-    marioAgent.nn = {} --truth table of all input/output vals
-    marioAgent.maxNeuron = 0 --num inputs
-    marioAgent.globalRank = 0 --rank compared to other agents
-    marioAgent.ran = false
-    marioAgent.mutationRates = {}
-    marioAgent.mutationRates["connections"] = _mutateConnectionsChance
-    marioAgent.mutationRates["link"] = _linkMutationChance
-    marioAgent.mutationRates["bias"] = _biasMutationChance
-    marioAgent.mutationRates["node"] = _nodeMutationChance
-    marioAgent.mutationRates["enable"] = _enableMutationChance
-    marioAgent.mutationRates["disable"] = _disableMutationChance
-    marioAgent.mutationRates["step"] = _stepSize
+  local marioAgent = {}
+  marioAgent.fitness = 0 --how good the agent is
+  marioAgent.traits = {} --like genes
+  marioAgent.nn = {} --truth table of all input/output vals
+  marioAgent.maxNeurons = 0 --num inputs
+  marioAgent.globalRank = 0 --rank compared to other agents
+  marioAgent.ran = false
+  marioAgent.mutationRates = {}
+  marioAgent.mutationRates["connections"] = _mutateConnectionsChance
+  marioAgent.mutationRates["link"] = _linkMutationChance
+  marioAgent.mutationRates["bias"] = _biasMutationChance
+  marioAgent.mutationRates["node"] = _nodeMutationChance
+  marioAgent.mutationRates["enable"] = _enableMutationChance
+  marioAgent.mutationRates["disable"] = _disableMutationChance
+  marioAgent.mutationRates["step"] = _stepSize
     
-    return marioAgent
+  return marioAgent
 end
 
 --copys an agent to another agent
 function copyMarioAgent(marioAgent)
-    local marioAgent2 = newMarioAgent()
-    for t = 1, #marioAgent.traits do
-        table.insert(marioAgent2.traits, copyTrait(marioAgent.traits[t]))
-    end
-    marioAgent2.maxNeuron = marioAgent.maxNeuron
-    marioAgent2.mutationRates["connections"] = marioAgent.mutationRates["connections"]
-    marioAgent2.mutationRates["link"] = marioAgent.mutationRates["link"]
-    marioAgent2.mutationRates["bias"] = marioAgent.mutationRates["bias"]
-    marioAgent2.mutationRates["node"] = marioAgent.mutationRates["node"]
-    marioAgent2.mutationRates["enable"] = marioAgent.mutationRates["enable"]
-    marioAgent2.mutationRates["disable"] = marioAgent.mutationRates["disable"]
+  local tempMarioAgent = newMarioAgent()
     
-    return marioAgent2
+  for t = 1, #marioAgent.traits do
+    table.insert(tempMarioAgent.traits, copyTrait(marioAgent.traits[t]))
+  end
+    
+  tempMarioAgent.maxNeurons = marioAgent.maxNeurons
+  tempMarioAgent.mutationRates["connections"] = marioAgent.mutationRates["connections"]
+  tempMarioAgent.mutationRates["link"] = marioAgent.mutationRates["link"]
+  tempMarioAgent.mutationRates["bias"] = marioAgent.mutationRates["bias"]
+  tempMarioAgent.mutationRates["node"] = marioAgent.mutationRates["node"]
+  tempMarioAgent.mutationRates["enable"] = marioAgent.mutationRates["enable"]
+  tempMarioAgent.mutationRates["disable"] = marioAgent.mutationRates["disable"]
+    
+  return tempMarioAgent
 end
 
---creates a basic agent ready to run
-function basicMarioAgent()
-    local marioAgent = newMarioAgent()
-    local innovation = 1
+--creates a primitiveAgent agent ready to run
+function primitiveMarioAgent()
+  local primitiveMarioAgent = newMarioAgent()
+  local modernization = 1
 
-    marioAgent.maxNeuron = _inputs
-    --give the agent a chance to mutate right off the bat
-    mutate(marioAgent)
+  primitiveMarioAgent.maxNeurons = _inputs
+  --give the agent a chance to mutate right off the bat
+  mutate(primitiveMarioAgent)
     
-    return marioAgent
+  return primitiveMarioAgent
 end
 
 
 
 --create new trait, like a gene
 function newTrait()
-    local trait = {}
-    trait.into = 0
-    trait.out = 0
-    trait.weight = 0.0
-    trait.enabled = true
-    trait.innovation = 0
+  local trait = {}
+  trait.enabled = true
+  trait.inn = 0
+  trait.out = 0
+  trait.weight = 0.0
+  trait.modernization = 0
     
-    return trait
+  return trait
 end
 
 --copies trait to another trait
 function copyTrait(trait)
-    local trait2 = newTrait()
-    trait2.into = trait.into
-    trait2.out = trait.out
-    trait2.weight = trait.weight
-    trait2.enabled = trait.enabled
-    trait2.innovation = trait.innovation
+  local tempTrait = newTrait()
+  tempTrait.enabled = trait.enabled
+  tempTrait.inn = trait.inn
+  tempTrait.out = trait.out
+  tempTrait.weight = trait.weight
+  tempTrait.modernization = trait.modernization
     
-    return trait2
+  return tempTrait
 end
 
+
+--sees how many traits are in common between two sets of traits
 function disjoint(traits1, traits2)
-    local i1 = {}
-    for i = 1,#traits1 do
-        local trait = traits1[i]
-        i1[trait.innovation] = true
+    local temp1 = {}
+    local temp2 = {}
+    local disjointTraits = 0
+    local n = 0
+    
+    for t = 1, #traits1 do
+        local trait = traits1[t]
+        temp1[trait.modernization] = true
     end
 
-    local i2 = {}
-    for i = 1,#traits2 do
-        local trait = traits2[i]
-        i2[trait.innovation] = true
+    for t = 1, #traits2 do
+        local trait = traits2[t]
+        temp2[trait.modernization] = true
     end
     
-    local disjointTraits = 0
-    for i = 1,#traits1 do
-        local trait = traits1[i]
-        if not i2[trait.innovation] then
-            disjointTraits = disjointTraits+1
+    for t = 1, #traits1 do
+        local trait = traits1[t]
+        if not temp2[trait.modernization] then
+            disjointTraits = disjointTraits + 1
         end
     end
     
-    for i = 1,#traits2 do
-        local trait = traits2[i]
-        if not i1[trait.innovation] then
-            disjointTraits = disjointTraits+1
+    for t = 1, #traits2 do
+        local trait = traits2[t]
+        if not temp1[trait.modernization] then
+            disjointTraits = disjointTraits + 1
         end
     end
     
-    local n = math.max(#traits1, #traits2)
+    n = math.max(#traits1, #traits2)
     
     return disjointTraits / n
 end
 
+--sums the weights of two sets of traits
 function weights(traits1, traits2)
-    local i2 = {}
-    for i = 1,#traits2 do
-        local trait = traits2[i]
-        i2[trait.innovation] = trait
-    end
+  local temp = {}
+  local sum = 0
+  local coincident = 0
+  
+  for t = 1, #traits2 do
+    local trait = traits2[t]
+    temp[trait.modernization] = trait
+  end
 
-    local sum = 0
-    local coincident = 0
-    for i = 1,#traits1 do
-        local trait = traits1[i]
-        if i2[trait.innovation] ~= nil then
-            local gene2 = i2[trait.innovation]
-            sum = sum + math.abs(trait.weight - gene2.weight)
-            coincident = coincident + 1
-        end
+  for t = 1, #traits1 do
+    local trait = traits1[t]
+    if temp[trait.modernization] ~= nil then
+      local tempTrait = temp[trait.modernization]
+      sum = sum + math.abs(trait.weight - tempTrait.weight)
+      coincident = coincident + 1
     end
+  end
     
-    return sum / coincident
+  return sum / coincident
 end
 
 --create new group
 function newGroup()
-    local group = {}
-    group.topFitness = 0
-    group.staleness = 0 --num gens in a row the group hasnt got better
-    group.marioAgents = {} --list of all agents in the group
-    group.averageFitness = 0
+  local group = {}
+  group.marioAgents = {} --list of all agents in the group
+  group.topFitness = 0
+  group.avgFitness = 0
+  group.staleness = 0 --num gens in a row the group hasnt got better
     
-    return group
+  return group
 end
 
 
 --adds the new child agent to a group similar to it
-function addToGroup(child)
-    local foundGroup = false
-    for s=1,#pool.group do
-        local group = pool.group[s]
-        if not foundGroup and sameGroup(child, group.marioAgents[1]) then
-            table.insert(group.marioAgents, child)
-            foundGroup = true
-        end
+function addAgentToGroup(agent)
+  local foundGroup = false
+  
+  for g = 1, #pool.groups do
+    local group = pool.groups[g]
+    if not foundGroup and sameGroup(agent, group.marioAgents[1]) then
+      table.insert(group.marioAgents, agent)
+      foundGroup = true
     end
+  end
     
-    if not foundGroup then
-        local childGroup = newGroup()
-        table.insert(childGroup.marioAgents, child)
-        table.insert(pool.group, childGroup)
-    end
+  if not foundGroup then
+    local agentGroup = newGroup()
+    table.insert(agentGroup.marioAgents, agent)
+    table.insert(pool.groups, agentGroup)
+  end
 end
 
 --finds if to agents have the same group
-function sameGroup(marioAgent1, marioAgent2)
-    local dd = _deltaDisjoint*disjoint(marioAgent1.traits, marioAgent2.traits)
-    local dw = _deltaWeights*weights(marioAgent1.traits, marioAgent2.traits) 
-    return dd + dw < _deltaThreshold
+function sameGroup(agent1, agent2)
+  local dd = _dDisjoint*disjoint(agent1.traits, agent2.traits)
+  local dw = _dWeights*weights(agent1.traits, agent2.traits) 
+  
+  return dd + dw < _dThreshold
 end
 
 --create a new neruon
 function newNeuron()
-    local neuron = {}
-    neuron.incoming = {}
-    neuron.value = 0.0
+  local neuron = {}
+  neuron.value = 0.0
+  neuron.incoming = {}
     
-    return neuron
+  return neuron
 end
 
 --creates a network that will take inputs from agent and spit out output for the agent
@@ -286,22 +280,23 @@ function generateNeuralNet(marioAgent)
     neuralNet.neurons = {}
     
     --create neurons needed for inputs
-    for i=1,_inputs do
+    for i = 1, _inputs do
         neuralNet.neurons[i] = newNeuron()
     end
     
     --create output neurons afer max num if nodes
-    for o=1,_outputs do
-        neuralNet.neurons[_maxNodes+o] = newNeuron()
+    for o = 1, _outputs do
+        neuralNet.neurons[_maxNeurons+o] = newNeuron()
     end
     
     --sort traits by output
     table.sort(marioAgent.traits, function (a,b)
         return (a.out < b.out)
     end)
+  
   --for all traits
-    for i=1,#marioAgent.traits do
-        local trait = marioAgent.traits[i]
+    for t = 1, #marioAgent.traits do
+        local trait = marioAgent.traits[t]
         if trait.enabled then
             --make new neuron for output
             if neuralNet.neurons[trait.out] == nil then
@@ -310,8 +305,8 @@ function generateNeuralNet(marioAgent)
             local neuron = neuralNet.neurons[trait.out]
             --set incoming neuron of the outout neruon to be isself
             table.insert(neuron.incoming, trait)
-            if neuralNet.neurons[trait.into] == nil then
-                neuralNet.neurons[trait.into] = newNeuron()
+            if neuralNet.neurons[trait.inn] == nil then
+                neuralNet.neurons[trait.inn] = newNeuron()
             end
         end
     end
@@ -321,92 +316,94 @@ end
 
 --get outpur from network based on inputs
 function evaluateNeuralNet(nn, inputs)
-    table.insert(inputs, 1)
+  table.insert(inputs, 1)
+  local outputs = {}
     
-    if #inputs ~= _inputs then
-        print("Wrong num of neural net inputs.")
-        return {}
+  --set all neurons equal to val of inputs
+  for i = 1, _inputs do
+    nn.neurons[i].value = inputs[i]
+  end
+    
+    
+  for _,neuron in pairs(nn.neurons) do
+    local sum = 0
+    for ni = 1, #neuron.incoming do
+      --go through all traits that connect an output
+      local incoming = neuron.incoming[ni]
+      --find input that this connects to
+      local temp = nn.neurons[incoming.inn]
+      --get sum
+      sum = sum + incoming.weight * temp.value
     end
-    
-    --set all neurons equal to val of inputs
-    for i=1,_inputs do
-        nn.neurons[i].value = inputs[i]
-    end
-    
-    
-    for _,neuron in pairs(nn.neurons) do
-        local sum = 0
-        for j = 1,#neuron.incoming do
-            --go through all traits that connect an output
-            local incoming = neuron.incoming[j]
-            --find input that this connects to
-            local other = nn.neurons[incoming.into]
-            --get sum
-            sum = sum + incoming.weight * other.value
-        end
         
-        --change val of neuron using sum and the sigmoid func
-        if #neuron.incoming > 0 then
-            neuron.value = sigmoid(sum)
-        end
+    --change val of neuron using sum and the sigmoid func
+    if #neuron.incoming > 0 then
+      neuron.value = sigmoid(sum)
     end
+  end
     
-    --add all active outputs for set of inputs
-    local outputs = {}
-    for o=1,_outputs do
-        local button = _buttons[o]
-        if nn.neurons[_maxNodes+o].value > 0 then
-            outputs[button] = true
-        else
-            outputs[button] = false
-        end
+  --add all active outputs for set of inputs
+  for o = 1, _outputs do
+    local button = _buttons[o]
+    if nn.neurons[_maxNeurons+o].value <= 0 then
+      outputs[button] = false
+    else
+      outputs[button] = true
     end
+  end
     
-    return outputs
+  return outputs
 end
 
-function evaluateCurrent()
-    local group = pool.group[pool.currentGroup]
-    local marioAgent = group.marioAgents[pool.currentMarioAgent]
+--uses evaluateNeuralNet to evaluate the network and ensure left/right and up/down are not pressed at same time
+function evaluateCurrentAgent()
+  local group = pool.groups[pool.currGroup]
+  local marioAgent = group.marioAgents[pool.currMarioAgent]
 
-    inputs = getInputs()
-    controller = evaluateNeuralNet(marioAgent.nn, inputs)
+  inputs = getInputs()
+  controller = evaluateNeuralNet(marioAgent.nn, inputs)
     
-    if controller["Left"] and controller["Right"] then
-        controller["Left"] = false
-        controller["Right"] = false
-    end
-    if controller["Up"] and controller["Down"] then
-        controller["Up"] = false
-        controller["Down"] = false
-    end
+  if controller["Up"] and controller["Down"] then
+    controller["Up"] = false
+    controller["Down"] = false
+  end
+  if controller["Left"] and controller["Right"] then
+    controller["Left"] = false
+    controller["Right"] = false
+  end
 
-    joypad.set(controller, 1)
+  joypad.set(controller, 1)
 end
 
+--check if the current agent has already ran
 function agentAlreadyRan()
-  local group = pool.group[pool.currentGroup]
-  local marioAgent = group.marioAgents[pool.currentMarioAgent]
+  local group = pool.groups[pool.currGroup]
+  local marioAgent = group.marioAgents[pool.currMarioAgent]
     
   return marioAgent.ran
 end
+
+--finds next agent to run
 function nextMarioAgent()
-    pool.currentMarioAgent = pool.currentMarioAgent + 1
-    if pool.currentMarioAgent > #pool.group[pool.currentGroup].marioAgents then
-        pool.currentMarioAgent = 1
-        pool.currentGroup = pool.currentGroup + 1
-        if pool.currentGroup > #pool.group then
-            newGeneration()
-            pool.currentGroup = 1
-        end
+  pool.currMarioAgent = pool.currMarioAgent + 1
+  
+  --iterate through all agents to see if all have ran and if so, new generation
+  if pool.currMarioAgent > #pool.groups[pool.currGroup].marioAgents then
+    pool.currMarioAgent = 1
+    pool.currGroup = pool.currGroup + 1
+    if pool.currGroup > #pool.groups then
+      newGeneration()
+      pool.currGroup = 1
     end
+  end
 end
 
+--finds the percent of agents to already run
 function percentCompleted()
   local total = 0
   local measured = 0
   
-  for _,group in pairs(pool.group) do
+  for _,group in pairs(pool.groups) do
     for _,marioAgent in pairs(group.marioAgents) do
       total = total + 1
       if marioAgent.ran then
@@ -415,57 +412,57 @@ function percentCompleted()
     end
   end
   
-  return math.floor(measured/total*100)
+  return math.floor(measured / total * 100)
 end
 
+--creates a new generation of agents
 function newGeneration()
-  --if forms.ischecked(noveltyIsOn) then
-		setNoveltyFitness()
-	--end
+  local sum = 0
+  local children = {}
+  setNoveltyFitness()
   
 	for loc,set in pairs(pool.landscape) do
 		pool.oldLandscape[loc] = {}
-		for sg,value in pairs(set) do
-        	pool.oldLandscape[loc][sg] = true
+		for ga,value in pairs(set) do
+      pool.oldLandscape[loc][ga] = true
 		end
 	end
   
 	--findMaxFitnessForGeneration()
-  pool.landscape={}
-  
+  pool.landscape = {}
   
   cullGroup(false) -- Cull the bottom half of each group
-  rankGlobally()
-  removeStaleGroup()
-  rankGlobally()
+  rankAgentsGlobally()
+  killStaleGroups() -- remove groups who havent improved
+  rankAgentsGlobally()
   
-  for s = 1,#pool.group do
-    local group = pool.group[s]
-    calculateAverageFitness(group)
+  for g = 1,#pool.groups do
+    local group = pool.groups[g]
+    calcAvgFitness(group)
   end
   
-  removeWeakGroup()
+  killWeakGroups() --remove groups that are classified as weak
   
-  local sum = totalAverageFitness()
-  local children = {}
+  sum = totalAvgFitness()
+  children = {}
   
-  for s = 1,#pool.group do
-    local group = pool.group[s]
-    breed = math.floor(group.averageFitness / sum * _population) - 1
-    for i=1,breed do
-      table.insert(children, breedChild(group))
+  for s = 1,#pool.groups do
+    local group = pool.groups[s]
+    numToBreed = math.floor(group.avgFitness / sum * _population) - 1
+    for i=1,numToBreed do
+      table.insert(children, breedChildAgent(group))
     end
   end
   
   cullGroup(true) -- Cull all but the top member of each group
   
-  while #children + #pool.group < _population do
-    local group = pool.group[math.random(1, #pool.group)]
-    table.insert(children, breedChild(group))
+  while #children + #pool.groups < _population do
+    local group = pool.groups[math.random(1, #pool.groups)]
+    table.insert(children, breedChildAgent(group))
   end
   for c=1,#children do
     local child = children[c]
-    addToGroup(child)
+    addAgentToGroup(child)
   end
     
   pool.generation = pool.generation + 1
@@ -482,16 +479,17 @@ function newGeneration()
 end
 
 --breeds a new agent from a given group, either through crossover and a simple copy
-function breedChild(group)
-    local child = {}
-    if math.random() < _crossoverChance then
-        a1 = group.marioAgents[math.random(1, #group.marioAgents)]
-        a2 = group.marioAgents[math.random(1, #group.marioAgents)]
-        child = crossover(a1, a2)
-    else
-        a = group.marioAgents[math.random(1, #group.marioAgents)]
-        child = copyMarioAgent(a)
-    end
+function breedChildAgent(group)
+  local child = {}
+    
+  if math.random() > _crossoverChance then
+    agent = group.marioAgents[math.random(1, #group.marioAgents)]
+    child = copyMarioAgent(agent)
+  else
+    agent1 = group.marioAgents[math.random(1, #group.marioAgents)]
+    agent2 = group.marioAgents[math.random(1, #group.marioAgents)]
+    child = crossover(agent1, agent2)
+  end
     
     mutate(child)
     
@@ -501,157 +499,164 @@ end
 --finds random neuron from some list of traits
 function randomNeuron(traits, nonInput)
     local neurons = {}
+    local count = 0
+    local n = 0
+    
     --add all inputs
     if not nonInput then
-        for i=1,_inputs do
+        for i = 1, _inputs do
             neurons[i] = true
         end
     end
     --add all outputs
-    for o=1,_outputs do
-        neurons[_maxNodes+o] = true
+    for o = 1, _outputs do
+        neurons[_maxNeurons+o] = true
     end
-    for i=1,#traits do
+    for t = 1, #traits do
         --add seperate gene inputs
-        if (not nonInput) or traits[i].into > _inputs then
-            neurons[traits[i].into] = true
+        if (not nonInput) or traits[t].inn > _inputs then
+            neurons[traits[t].inn] = true
         end
         --add seperate gene outputs
-        if (not nonInput) or traits[i].out > _inputs then
-            neurons[traits[i].out] = true
+        if (not nonInput) or traits[t].out > _inputs then
+            neurons[traits[t].out] = true
         end
     end
 
-    local count = 0
     --count how many neurons we came up with
     for _,_ in pairs(neurons) do
         count = count + 1
     end
     --generate random number inside this amount
-    local n = math.random(1, count)
+    n = math.random(1, count)
     
     --find the random neuron
-    for k,v in pairs(neurons) do
+    for key, value in pairs(neurons) do
         n = n-1
         if n == 0 then
-            return k
+            return key
         end
     end
     
     return 0
 end
 
-function crossover(g1, g2)
-    -- Make sure g1 is the higher fitness marioAgent
-    if g2.fitness > g1.fitness then
-        tempg = g1
-        g1 = g2
-        g2 = tempg
-    end
+--breeding down by combining two agents
+function crossover(agent1, agent2)
+  -- Make sure g1 is the higher fitness marioAgent
+  if agent2.fitness > agent1.fitness then
+    tempAgent = agent1
+    agent1 = agent2
+    agent2 = tempAgent
+  end
 
-    local child = newMarioAgent()
+  local child = newMarioAgent()
     
-    local innovations2 = {}
-    for i=1,#g2.traits do
-        local trait = g2.traits[i]
-        innovations2[trait.innovation] = trait
+  local modernizations2 = {}
+  for t = 1, #agent2.traits do
+    local trait = agent2.traits[t]
+    modernizations2[trait.modernization] = trait
+  end
+    
+  for t = 1, #agent1.traits do
+    local tempTrait = agent1.traits[t]
+    local tempTrait2 = modernizations2[tempTrait.modernization]
+    if tempTrait2 ~= nil and math.random(2) == 1 and tempTrait2.enabled then
+      table.insert(child.traits, copyTrait(tempTrait2))
+    else
+      table.insert(child.traits, copyTrait(tempTrait))
     end
+  end
     
-    for i=1,#g1.traits do
-        local gene1 = g1.traits[i]
-        local gene2 = innovations2[gene1.innovation]
-        if gene2 ~= nil and math.random(2) == 1 and gene2.enabled then
-            table.insert(child.traits, copyTrait(gene2))
-        else
-            table.insert(child.traits, copyTrait(gene1))
-        end
-    end
+  child.maxNeurons = math.max(agent1.maxNeurons, agent2.maxNeurons)
     
-    child.maxNeuron = math.max(g1.maxNeuron,g2.maxNeuron)
+  for m, r in pairs(agent1.mutationRates) do
+    child.mutationRates[m] = r
+  end
     
-    for mutation,rate in pairs(g1.mutationRates) do
-        child.mutationRates[mutation] = rate
-    end
-    
-    return child
+  return child
 end
 
 
---Removes agents from a group. If cut to one, then one agent remians in group
-function cullGroup(cutToOne)
-    for s = 1,#pool.group do
-        local group = pool.group[s]
+
+--Removes agents from a group. If cut to one agnet, then one agent remians in group
+function cullGroup(toOneAgent)
+  for s = 1,#pool.groups do
+    local group = pool.groups[s]
         
-        table.sort(group.marioAgents, function (a,b)
-            return (a.fitness > b.fitness)
-        end)
+    table.sort(group.marioAgents, function (a,b)
+      return (a.fitness > b.fitness)
+    end)
         
-        local remaining = math.ceil(#group.marioAgents/2)
-        if cutToOne then
-            remaining = 1
-        end
-        while #group.marioAgents > remaining do
-            table.remove(group.marioAgents)
-        end
+    local remainingAgents = math.ceil(#group.marioAgents/2)
+    if ctoOneAgent then
+      remainingAgents = 1
     end
+    while #group.marioAgents > remainingAgents do
+      table.remove(group.marioAgents)
+    end
+  end
 end
 
 --removes groups that have not improved
-function removeStaleGroup()
-    local survived = {}
+function killStaleGroups()
+  local notStale = {}
 
-    for s = 1,#pool.group do
-        local group = pool.group[s]
+  for g = 1,#pool.groups do
+    local group = pool.groups[g]
         
-        table.sort(group.marioAgents, function (a,b)
-            return (a.fitness > b.fitness)
-        end)
-        --look at fitness from top agent in group and see if higher that the current group top fitness
-        if group.marioAgents[1].fitness > group.topFitness then
-            group.topFitness = group.marioAgents[1].fitness
-            group.staleness = 0
-        else
-            group.staleness = group.staleness + 1
-        end
-        --if group is below the stale threshold or has set a new max fitness, then they do not get voted off the island
-        if group.staleness < _staleGroup or group.topFitness >= pool.maxFitness then
-            table.insert(survived, group)
-        end
+    table.sort(group.marioAgents, function (a,b)
+      return (a.fitness > b.fitness)
+    end)
+    --look at fitness from top agent in group and see if higher that the current group top fitness
+    if group.marioAgents[1].fitness < group.topFitness then
+      group.staleness = group.staleness + 1
+    else
+      group.staleness = 0
+      group.topFitness = group.marioAgents[1].fitness
     end
-    --num of groups now is equal to only the survivors
-    pool.group = survived
+    --if group is below the stale threshold or has set a new max fitness, then they do not get voted off the island
+    if group.topFitness >= pool.maxFitness or group.staleness < _staleGroupThreshold then
+      table.insert(notStale, group)
+    end
+  end
+  --num of groups now is equal to only the survivors
+  pool.groups = notStale
 end
 
-function removeWeakGroup()
-    local survived = {}
-
-    local sum = totalAverageFitness()
-    for s = 1,#pool.group do
-        local group = pool.group[s]
-        breed = math.floor(group.averageFitness / sum * _population)
-        if breed >= 1 then
-            table.insert(survived, group)
+--remvoes groups that are classified as weak
+function killWeakGroups()
+    local notWeak = {}
+    local sum = 0
+    
+    sum = totalAvgFitness()
+    for g = 1, #pool.groups do
+        local group = pool.groups[g]
+        numToBreed = math.floor(group.avgFitness / sum * _population)
+        if numToBreed >= 1 then
+            table.insert(notWeak, group)
         end
     end
 
-    pool.group = survived
+    pool.groups = notWeak
 end
 
+--creates the pool to be used
 function initializePool()
     pool = newPool()
     
     initializeFitnessFile()
 
-    for i=1, _population do
-        basic = basicMarioAgent()
-        addToGroup(basic)
+    for i = 1, _population do
+        primitiveAgent = primitiveMarioAgent()
+        addAgentToGroup(primitiveAgent)
     end
 
     initializeRun()
 end
 
 function initializeRun()
-    savestate.load(_state2)
+    savestate.load(_state)
     furthestDistance = 0
     pool.currentFrame = 0
     timeout = _timeoutConstant
@@ -660,18 +665,21 @@ function initializeRun()
     getScore()
     netX = marioX
     --netScore = marioScore
-    clearJoypad()
+    clearController()
     
-    local group = pool.group[pool.currentGroup]
-    local marioAgent = group.marioAgents[pool.currentMarioAgent]
+    local group = pool.groups[pool.currGroup]
+    local marioAgent = group.marioAgents[pool.currMarioAgent]
+    
     generateNeuralNet(marioAgent)
-    evaluateCurrent()
+    evaluateCurrentAgent()
 end
 
-function clearJoypad()
-    controller = {}
-    for b = 1,#_buttons do
-        controller[_buttons[b]] = false
-    end
+function clearController()
+  controller = {}
+    
+  for b = 1, #_buttons do
+    controller[_buttons[b]] = false
+  end
+  
   joypad.set(controller, 1)
 end

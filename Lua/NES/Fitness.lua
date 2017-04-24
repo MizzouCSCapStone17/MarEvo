@@ -1,56 +1,55 @@
-
-
 --ranks all agents and determines one w/ highest fitness. higher rank = higher fitness
-function rankGlobally()
-    local global = {}
-    for s = 1,#pool.group do
-        local group = pool.group[s]
-        for g = 1,#group.marioAgents do
-            table.insert(global, group.marioAgents[g])
-        end
+function rankAgentsGlobally()
+  local globalRankings = {}
+  
+  for g = 1,#pool.groups do
+    local group = pool.groups[g]
+    for a = 1,#group.marioAgents do
+      table.insert(globalRankings, group.marioAgents[a])
     end
-    table.sort(global, function (a,b)
-        return (a.fitness < b.fitness)
-    end)
+  end
+  table.sort(globalRankings, function (a,b)
+    return (a.fitness < b.fitness)
+  end)
     
-    for g=1,#global do
-        global[g].globalRank = g
-    end
+  for a = 1, #globalRankings do
+    globalRankings[a].globalRank = a
+  end
 end
 
 --determines if current agent has fitness measured
 function fitnessAlreadyMeasured()
-  local group = pool.group[pool.currentGroup]
-  local marioAgent = group.marioAgents[pool.currentMarioAgent]
+  local group = pool.groups[pool.currGroup]
+  local marioAgent = group.marioAgents[pool.currMarioAgent]
     
   return marioAgent.fitness ~= 0
 end
 
 --calculates avg fitness of a group by global rank added up divided by num of agents
-function calculateAverageFitness(group)
-    local total = 0
+function calcAvgFitness(group)
+  local totalFitness = 0
+  
+  for a = 1, #group.marioAgents do
+    local marioAgent = group.marioAgents[a]
+    totalFitness = totalFitness + marioAgent.globalRank
+  end
     
-    for g=1,#group.marioAgents do
-        local marioAgent = group.marioAgents[g]
-        total = total + marioAgent.globalRank
-    end
-    
-    group.averageFitness = total / #group.marioAgents
+  group.avgFitness = totalFitness / #group.marioAgents
     
 end
 
 --total is sum of the total avg fitness for each group
-function totalAverageFitness()
-    local total = 0
-    for s = 1,#pool.group do
-        local group = pool.group[s]
-        total = total + group.averageFitness
-    end
+function totalAvgFitness()
+  local totalFitness = 0
+  for g = 1, #pool.groups do
+    local group = pool.groups[g]
+    totalFitness = totalFitness + group.avgFitness
+  end
 
-    return total
+  return totalFitness
 end
 
-function calculateTotalFitness()
+function calcTotalFitness()
   local distanceFitness = 0
   local scoreFitness = 0
   local noveltyFitness = 0
@@ -71,5 +70,4 @@ function calculateTotalFitness()
       
     --table.sort(fitnesses)
   return fitnesses[0] + fitnesses[1] + fitnesses[2]
-  
 end

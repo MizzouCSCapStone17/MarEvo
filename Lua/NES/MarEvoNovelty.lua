@@ -19,8 +19,8 @@ while true do
   gui.drawBox(0, 0, 300, 40, 0xFFFFFFFF, 0xFFFFFFFF)
   
   --Get current group and agent
-  local group = pool.group[pool.currentGroup]
-  local marioAgent = group.marioAgents[pool.currentMarioAgent]
+  local group = pool.groups[pool.currGroup]
+  local marioAgent = group.marioAgents[pool.currMarioAgent]
     
   --Displays the network for the current agent
   if forms.ischecked(showNeuralNet) then
@@ -33,7 +33,7 @@ while true do
   
   --Evaulate the current agent every 4 frames
   if pool.currentFrame % 4 == 0 then
-    evaluateCurrent()
+    evaluateCurrentAgent()
   end
     
   --Set the output based on what network picks
@@ -76,7 +76,7 @@ while true do
     console.write("Novelty: " .. noveltyFitness .. "\n")
     
     fitness = distanceFitness + scoreFitness + noveltyFitness
-    --fitness = calculateTotalFitness()
+    --fitness = calcTotalFitness()
     
     --bonus for finishing the level
     if furthestDistance > 3186 then
@@ -96,10 +96,10 @@ while true do
       writeFile("Pools/maxFitnessGen." .. marioWorld .. "-".. marioLevel .. ".pool")
     end
       
-    console.write("Gen " .. pool.generation .. ". Group " .. pool.currentGroup .. ". Agent " .. pool.currentMarioAgent .. ". Fitness: " .. fitness .. "\n")
+    console.write("Gen " .. pool.generation .. ". Group " .. pool.currGroup .. ". Agent " .. pool.currMarioAgent .. ". Fitness: " .. fitness .. "\n")
       
-    pool.currentGroup = 1
-    pool.currentMarioAgent = 1
+    pool.currGroup = 1
+    pool.currMarioAgent = 1
       
     while agentAlreadyRan() do
       nextMarioAgent()
@@ -112,13 +112,13 @@ while true do
   local percentCompleteWithGen = percentCompleted()
   
   gui.drawText(110, 5, "MarEvo", 0xFF000000, 11, 14)
-  gui.drawText(0, 20, "Gen: " .. pool.generation .. " || Group: " .. pool.currentGroup .. " || Agent: " .. pool.currentMarioAgent .. " || " .. percentCompleteWithGen .. " %", 0xFF000000, 11, 10)
+  gui.drawText(0, 20, "Gen: " .. pool.generation .. " || Group: " .. pool.currGroup .. " || Agent: " .. pool.currMarioAgent .. " || " .. percentCompleteWithGen .. " %", 0xFF000000, 11, 10)
   
   distanceFitness = tonumber(forms.gettext(distanceWeight)) * ((furthestDistance - netX) - pool.currentFrame / 2) * (math.random(8, 12) / 10)
   scoreFitness = tonumber(forms.gettext(scoreWeight)) * (marioScore) * (math.random(8, 12) / 10)
   noveltyFitness = tonumber(forms.gettext(noveltyWeight)) * (_currentNSFitness)
   fitness = distanceFitness + scoreFitness + noveltyFitness
-  --temp_fitness = calculateTotalFitness()
+  --temp_fitness = calcTotalFitness()
   
   gui.drawText(0, 30, "Fitness: " .. fitness .. " || Max Fitness: " .. math.floor(pool.maxFitness), 0xFF000000, 11, 10)
     

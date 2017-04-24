@@ -3,7 +3,7 @@ function writeMutations()
   local file = io.open("Mutations.csv", "a")
   
   file:write(pool.generation .. "\n")
-  for n,group in pairs(pool.group) do
+  for n,group in pairs(pool.groups) do
     file:write(#group.marioAgents .. "\n")
     for m,marioAgent in pairs(group.marioAgents) do
       for mutation,rate in pairs(marioAgent.mutationRates) do
@@ -22,9 +22,9 @@ function writeAvgNumNeurons()
   local file = io.open("Neurons.csv", "a")
   file:write(pool.generation .. ",")
   
-  for n,group in pairs(pool.group) do
+  for n,group in pairs(pool.groups) do
     for m,marioAgent in pairs(group.marioAgents) do
-      totalNeurons = totalNeurons + marioAgent.maxNeuron
+      totalNeurons = totalNeurons + marioAgent.maxNeurons
     end
   end
   file:write(totalNeurons / 300 .. "\n")
@@ -37,7 +37,7 @@ function writeAvgFitness()
   local file = io.open("AvgFitness.csv", "a")
   file:write(pool.generation .. ",")
   
-  for n,group in pairs(pool.group) do
+  for n,group in pairs(pool.groups) do
     for m,marioAgent in pairs(group.marioAgents) do
       totalFitness = totalFitness + marioAgent.fitness
     end
@@ -52,7 +52,7 @@ function writeAvgNumTraits()
   local file = io.open("Traits.csv", "a")
   file:write(pool.generation .. ",")
   
-  for n,group in pairs(pool.group) do
+  for n,group in pairs(pool.groups) do
     for m,marioAgent in pairs(group.marioAgents) do
       totalTraits = totalTraits + #marioAgent.traits
     end
@@ -65,9 +65,9 @@ end
 function writeAvgGroupFitness()
   local file = io.open("GroupFitnesses.csv", "a")
   file:write(pool.generation .. ",")
-  for n,group in pairs(pool.group) do
+  for n,group in pairs(pool.groups) do
     file:write(n .. "\n")
-    file:write(group.averageFitness .. "\n")
+    file:write(group.avgFitness .. "\n")
   end
   --file:write("done\n")
   file:close()
@@ -76,7 +76,7 @@ end
 function writeNumGroups()
   local file = io.open("NumGroups.csv", "a")
 	file:write(pool.generation .. ",")
-	file:write(#pool.group .. "\n")
+	file:write(#pool.groups .. "\n")
   --file:write("done\n")
   file:close()
 end
@@ -94,14 +94,14 @@ function writeFile(filename)
     local file = io.open(filename, "w")
 	file:write(pool.generation .. "\n")
 	file:write(pool.maxFitness .. "\n")
-	file:write(#pool.group .. "\n")
-  for n,group in pairs(pool.group) do
+	file:write(#pool.groups .. "\n")
+  for n,group in pairs(pool.groups) do
 		file:write(group.topFitness .. "\n")
 		file:write(group.staleness .. "\n")
 		file:write(#group.marioAgents .. "\n")
 		for m,marioAgent in pairs(group.marioAgents) do
 			file:write(marioAgent.fitness .. "\n")
-			file:write(marioAgent.maxNeuron .. "\n")
+			file:write(marioAgent.maxNeurons .. "\n")
 			for mutation,rate in pairs(marioAgent.mutationRates) do
 				file:write(mutation .. "\n")
 				file:write(rate .. "\n")
@@ -110,10 +110,10 @@ function writeFile(filename)
 
 			file:write(#marioAgent.traits .. "\n")
 			for l,trait in pairs(marioAgent.traits) do
-				file:write(trait.into .. " ")
+				file:write(trait.inn .. " ")
 				file:write(trait.out .. " ")
 				file:write(trait.weight .. " ")
-				file:write(trait.innovation .. " ")
+				file:write(trait.modernization .. " ")
 				if(trait.enabled) then
 					file:write("1\n")
 				else
@@ -154,13 +154,13 @@ function loadFile(filename)
 		.1 Line: Into // what inputs need to be on screen to run this
 		.2 Line: Out // what output to execute
 		.3 Line: Weight // how important is this trait
-		.4 Line: Innovation // newness or changes to trait
+		.4 Line: modernization // newness or changes to trait
 		.5 Line: Enabled // whether or not to use the trait
 		--]]
     local numGroups = file:read("*number")
     for s=1,numGroups do
       local group = newGroup()
-      table.insert(pool.group, group)
+      table.insert(pool.groups, group)
       group.topFitness = file:read("*number")
       group.staleness = file:read("*number")
       local numMarioAgents = file:read("*number")
@@ -168,7 +168,7 @@ function loadFile(filename)
         local marioAgent = newMarioAgent()
         table.insert(group.marioAgents, marioAgent)
         marioAgent.fitness = file:read("*number")
-        marioAgent.maxNeuron = file:read("*number")
+        marioAgent.maxNeurons = file:read("*number")
         local line = file:read("*line")
         while line ~= "done" do
           marioAgent.mutationRates[line] = file:read("*number")
@@ -179,7 +179,7 @@ function loadFile(filename)
           local trait = newTrait()
           table.insert(marioAgent.traits, trait)
           local enabled
-          trait.into, trait.out, trait.weight, trait.innovation, enabled = file:read("*number", "*number", "*number", "*number", "*number")
+          trait.inn, trait.out, trait.weight, trait.modernization, enabled = file:read("*number", "*number", "*number", "*number", "*number")
           if enabled == 0 then
             trait.enabled = false
           else

@@ -32,12 +32,12 @@ _population = 200
 _netGeneration = 0
 
 --deltas for group selection
-_deltaDisjoint = 2.0
-_deltaWeights = 0.4
+_dDisjoint = 2.0
+_dWeights = 0.4
 _deltaThreshold = 1.0
 
 --how long until a group goes extinct if it doesnt improve
-_staleGroup = 10
+_staleGroupThreshold = 10
 
 --chances used in mutation
 _mutateConnectionsChance = 0.30
@@ -68,7 +68,5 @@ _distanceWeight = 1
 _scoreWeight = 0.5
 _noveltyWeight = 10
 
---fitness = 0
-
 --total num of connecting nodes possible for each trait. So output nodes can start at a certain number
-_maxNodes = 1000000
+_maxNeurons = 1000000
