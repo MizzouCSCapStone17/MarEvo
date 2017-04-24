@@ -32,6 +32,21 @@ function writeAvgNumNeurons()
   file:close()
 end
 
+function writeAvgFitness()
+  local totalFitness = 0
+  local file = io.open("AvgFitness.csv", "a")
+  file:write(pool.generation .. ",")
+  
+  for n,group in pairs(pool.group) do
+    for m,marioAgent in pairs(group.marioAgents) do
+      totalFitness = totalFitness + marioAgent.fitness
+    end
+  end
+  file:write(totalFitness / 300 .. "\n")
+  --file:write("done\n")
+  file:close()
+end
+
 function writeAvgNumTraits()
   local totalTraits = 0
   local file = io.open("Traits.csv", "a")

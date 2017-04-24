@@ -114,8 +114,8 @@ function displayNetwork(marioAgent)
     local i = 1
     local cell = {}
     --finds all visible cells
-    for dy=-_boxRadius,_boxRadius do
-        for dx=-_boxRadius,_boxRadius do
+    for dy=-_inputRadius,_inputRadius do
+        for dx=-_inputRadius,_inputRadius do
             cell = {}
             cell.x = 120+16*dx
             cell.y = 184+16*dy

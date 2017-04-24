@@ -3,6 +3,7 @@
 
 _stateFolder="States/"
 _state = _stateFolder.."level.1-1.State"
+_state2 = _stateFolder.."level.1-2.State"
 
 _buttons = {
   "A",
@@ -14,10 +15,10 @@ _buttons = {
 }
 
 --where inputs will be taken in at. Basically the agents eye.
-_boxRadius = 6
+_inputRadius = 6
 
 --amount of inputs the agent can take in. Twice the amount of the box b/c there are 2 inputs. Dynamic (enemies) and static (blocks)
-_inputSize = (_boxRadius*2+1)*(_boxRadius*2+1)
+_inputSize = (_inputRadius*2+1)*(_inputRadius*2+1)
 
 --what the agent can see
 _inputs = _inputSize + 1

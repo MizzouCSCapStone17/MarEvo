@@ -337,7 +337,7 @@ function evaluateNeuralNet(nn, inputs)
     for _,neuron in pairs(nn.neurons) do
         local sum = 0
         for j = 1,#neuron.incoming do
-            --go all traits that connect an output
+            --go through all traits that connect an output
             local incoming = neuron.incoming[j]
             --find input that this connects to
             local other = nn.neurons[incoming.into]
@@ -477,6 +477,7 @@ function newGeneration()
   writeAvgGroupFitness()
   writeNumGroups()
   writeMaxFitness()
+  writeAvgFitness()
 
 end
 
@@ -650,7 +651,7 @@ function initializePool()
 end
 
 function initializeRun()
-    savestate.load(_state)
+    savestate.load(_state2)
     furthestDistance = 0
     pool.currentFrame = 0
     timeout = _timeoutConstant

@@ -1,4 +1,4 @@
---get mario position and a few things about him
+--get mario position
 function getPositions()
     marioX = memory.readbyte(0x6D) * 0x100 + memory.readbyte(0x86)
     marioY = memory.readbyte(0x03B8) + 16
@@ -47,7 +47,7 @@ function getSprites()
 end
 
 function getLevelInfo()
-		marioLevel = memory.readbyte(0x075C)
+		marioLevel = memory.readbyte(0x0760)
 		marioWorld = memory.readbyte(0x075F)
 end
 
@@ -85,9 +85,9 @@ function getInputs()
     local inputs = {}
     
     --For disty from -16 times the box radius to 16 times the box radius incrementing by 16 and will loop box radius*2 times
-    for dy=-_boxRadius*16,_boxRadius*16,16 do
+    for dy=-_inputRadius*16,_inputRadius*16,16 do
         --same for x's
-        for dx=-_boxRadius*16,_boxRadius*16,16 do
+        for dx=-_inputRadius*16,_inputRadius*16,16 do
             --Set all inputs to 0
             inputs[#inputs+1] = 0
             
@@ -122,13 +122,4 @@ function getCollision()
   else
     collided = true
   end
-end
-
-function playing()
-    local levelResetTimer = memory.readbyte(0x0747)
-    local loadingScreen = memory.readbyte(0x071E)
-    local playerState = memory.readbyte(0x000E)
-    local playOnScreen = memory.readbyte(0x00B5)
-    
-    return levelResetTimer==0 and loadingScreen~=11 and (playerState==8 or playerState==1 or playerState==0) and playOnScreen<=1
 end

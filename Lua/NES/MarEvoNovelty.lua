@@ -7,7 +7,7 @@ require "Timeout"
 require "Mutate"
 require "NeuralNet"
 
-createForm(140,40,375,400)
+createForm(140,40,375,450)
 
 if pool == nil then
     initializePool()
@@ -68,9 +68,9 @@ while true do
       
     marioAgent.ran = true
     
-    distanceFitness = tonumber(forms.gettext(distanceWeight)) * ((furthestDistance - netX) - pool.currentFrame / 2)
+    distanceFitness = tonumber(forms.gettext(distanceWeight)) * ((furthestDistance - netX) - pool.currentFrame / 2) * (math.random(8, 12) / 10)
     console.write("Distance: " .. distanceFitness .. "\n")
-    scoreFitness = tonumber(forms.gettext(scoreWeight)) * (marioScore)
+    scoreFitness = tonumber(forms.gettext(scoreWeight)) * (marioScore) * (math.random(8, 12) / 10)
     console.write("Score: " .. scoreFitness .. "\n")
     noveltyFitness = tonumber(forms.gettext(noveltyWeight)) * (_currentNSFitness)
     console.write("Novelty: " .. noveltyFitness .. "\n")
@@ -114,8 +114,8 @@ while true do
   gui.drawText(110, 5, "MarEvo", 0xFF000000, 11, 14)
   gui.drawText(0, 20, "Gen: " .. pool.generation .. " || Group: " .. pool.currentGroup .. " || Agent: " .. pool.currentMarioAgent .. " || " .. percentCompleteWithGen .. " %", 0xFF000000, 11, 10)
   
-  distanceFitness = tonumber(forms.gettext(distanceWeight)) * ((furthestDistance - netX) - pool.currentFrame / 2)
-  scoreFitness = tonumber(forms.gettext(scoreWeight)) * (marioScore)
+  distanceFitness = tonumber(forms.gettext(distanceWeight)) * ((furthestDistance - netX) - pool.currentFrame / 2) * (math.random(8, 12) / 10)
+  scoreFitness = tonumber(forms.gettext(scoreWeight)) * (marioScore) * (math.random(8, 12) / 10)
   noveltyFitness = tonumber(forms.gettext(noveltyWeight)) * (_currentNSFitness)
   fitness = distanceFitness + scoreFitness + noveltyFitness
   --temp_fitness = calculateTotalFitness()
